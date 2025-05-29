@@ -8,17 +8,29 @@ import { useTimer } from '@/hooks/use-timer';
 import { useToast } from '@/hooks/use-toast';
 import { translations, type Language } from '@/lib/translations';
 
-import Header from '@/components/app/Header';
 import ControlsSection from '@/components/app/ControlsSection';
 import StudyArea from '@/components/app/StudyArea';
 import ContinuousListeningSection from '@/components/app/ContinuousListeningSection';
 import FlashcardGame from '@/components/app/FlashcardGame';
-import SentenceBuilderGame from '@/components/app/SentenceBuilderGame'; // Added
+import SentenceBuilderGame from '@/components/app/SentenceBuilderGame';
 import NativeContentSwitchSection from '@/components/app/NativeContentSwitchSection';
 import Footer from '@/components/app/Footer';
+import LanguageSwitcher from '@/components/app/LanguageSwitcher';
 import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft } from 'lucide-react';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarTrigger,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarFooter,
+  SidebarInset,
+} from '@/components/ui/sidebar';
 
 interface RawSentenceDataFromFile {
   id: string;
@@ -32,6 +44,8 @@ interface RawSentenceDataFromFile {
   audioSrcEn?: string;
   audioSrcAl?: string;
 }
+
+type ActiveSection = 'config' | 'study' | 'listening' | 'flashcards' | 'builder' | 'timer';
 
 export default function LinguaLeapPage() {
   const [allSentences, setAllSentences] = useState<Sentence[]>([]);
@@ -61,6 +75,7 @@ export default function LinguaLeapPage() {
 
   const continuousPlayCurrentIndexRef = useRef<number>(0);
   const [currentLanguage, setCurrentLanguage] = useState<Language>('en');
+  const [activeSection, setActiveSection] = useState<ActiveSection>('study');
 
   const {
     timerSeconds,
@@ -127,6 +142,16 @@ export default function LinguaLeapPage() {
       setIsAnswerRevealed(true);
     }
   }, [studyMode]);
+
+  const t = (key: keyof typeof translations, params?: Record<string, string | number>) => {
+    let text = translations[key]?.[currentLanguageRef.current] ?? String(key);
+    if (params) {
+      Object.entries(params).forEach(([paramKey, value]) => {
+        text = text.replace(`{${paramKey}}`, String(value));
+      });
+    }
+    return text;
+  };
 
   const showNotification = useCallback((messageKey: keyof typeof translations, variant: "default" | "destructive" = "default", params?: Record<string, string | number>) => {
     let message = translations[messageKey]?.[currentLanguageRef.current] ?? String(messageKey);
@@ -288,7 +313,7 @@ export default function LinguaLeapPage() {
 
     console.log(`Attempting to play audio file (Play ID ${playId}): "${finalSrcPath}" [${lang}]`);
     audioRef.current.src = finalSrcPath;
-    audioRef.current.playbackRate = playbackSpeedRef.current;
+    
 
     audioRef.current.oncanplaythrough = null;
     audioRef.current.onended = null;
@@ -419,7 +444,6 @@ export default function LinguaLeapPage() {
     let secondaryAudioSrc: string | undefined;
     let secondaryLang: 'en' | 'al' | null = null;
 
-    // Always play French first
     primaryAudioSrc = sentence.audioSrcFr;
     primaryLang = 'fr';
 
@@ -625,27 +649,22 @@ export default function LinguaLeapPage() {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-destructive p-8 text-center">
         <AlertCircle className="h-16 w-16 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">{translations.errorLoadingAppData[currentLanguage]}</h1>
+        <h1 className="text-2xl font-bold mb-2">{t('errorLoadingAppData')}</h1>
         <p className="mb-6">{error}</p>
         <Button onClick={loadSentenceData} variant="destructive">
-          {translations.tryReloadingData[currentLanguage]}
+          {t('tryReloadingData')}
         </Button>
       </div>
     );
   }
   
-  const mainContentLayout = "mt-8 space-y-10 md:space-y-12";
+  const mainContentLayout = "p-4 sm:p-6 lg:p-8";
 
-  return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8 font-sans bg-gradient-to-br from-background to-muted/30">
-      <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50">
-        <Header language={currentLanguage} onLanguageChange={(lang) => {
-          stopAudio(); 
-          setCurrentLanguage(lang);
-        }} />
-
-        <div className={mainContentLayout}>
-           <ControlsSection
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'config':
+        return (
+          <ControlsSection
             language={currentLanguage}
             studyMode={studyMode}
             onStudyModeChange={(newMode) => {
@@ -662,6 +681,9 @@ export default function LinguaLeapPage() {
             allSentencesCount={allSentences.length}
             isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)}
           />
+        );
+      case 'study':
+        return (
           <StudyArea
             language={currentLanguage}
             sentence={currentSentenceData}
@@ -690,6 +712,9 @@ export default function LinguaLeapPage() {
             isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
             allSentencesCount={allSentences.length}
           />
+        );
+      case 'listening':
+        return (
           <ContinuousListeningSection
             language={currentLanguage}
             isPlaying={isContinuousPlaying}
@@ -700,11 +725,17 @@ export default function LinguaLeapPage() {
             totalSentencesInChunk={currentChunkSentences.length}
             isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
           />
+        );
+      case 'flashcards':
+        return (
           <FlashcardGame
             language={currentLanguage}
             sentences={currentChunkSentences}
             isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
           />
+        );
+      case 'builder':
+        return (
           <SentenceBuilderGame
             language={currentLanguage}
             sentence={currentSentenceData}
@@ -714,6 +745,9 @@ export default function LinguaLeapPage() {
             currentSentenceIndex={currentSentenceIndex}
             totalSentencesInChunk={currentChunkSentences.length}
           />
+        );
+      case 'timer':
+        return (
           <NativeContentSwitchSection
             language={currentLanguage}
             practiceTimeMinutes={practiceTimeMinutes}
@@ -724,9 +758,123 @@ export default function LinguaLeapPage() {
             showSwitchToNativeAlert={showSwitchToNativeAlert}
             onHideAlert={resetTimerAlert}
           />
-          <Footer language={currentLanguage} />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-2 p-2">
+             <img src="/logo.svg" alt="LinguaLeap Logo" className="h-8 w-8" data-ai-hint="logo" />
+            <span className="text-lg font-semibold">{t('appTitle')}</span>
+            <SidebarTrigger className="ml-auto md:hidden" />
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setActiveSection('study')}
+                isActive={activeSection === 'study'}
+                tooltip={t('studyZoneTitle')}
+              >
+                <NotebookPen />
+                <span>{t('studyZoneTitle')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setActiveSection('config')}
+                isActive={activeSection === 'config'}
+                tooltip={t('studyConfigurationTitle')}
+              >
+                <Settings />
+                <span>{t('studyConfigurationTitle')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setActiveSection('listening')}
+                isActive={activeSection === 'listening'}
+                tooltip={t('continuousListeningTitle')}
+              >
+                <Radio />
+                <span>{t('continuousListeningTitle')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setActiveSection('flashcards')}
+                isActive={activeSection === 'flashcards'}
+                tooltip={t('flashcardGameTitle')}
+              >
+                <Zap />
+                <span>{t('flashcardGameTitle')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setActiveSection('builder')}
+                isActive={activeSection === 'builder'}
+                tooltip={t('sentenceBuilderTitle')}
+              >
+                <Dices />
+                <span>{t('sentenceBuilderTitle')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setActiveSection('timer')}
+                isActive={activeSection === 'timer'}
+                tooltip={t('focusTimerTitle')}
+              >
+                <TimerIcon />
+                <span>{t('focusTimerTitle')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter>
+           <div className="p-2">
+            <LanguageSwitcher 
+              currentLanguage={currentLanguage} 
+              onLanguageChange={(lang) => {
+                stopAudio(); 
+                setCurrentLanguage(lang);
+              }} 
+            />
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
+           <div className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur-sm md:hidden">
+            <SidebarTrigger>
+              <PanelLeft />
+            </SidebarTrigger>
+            <span className="text-lg font-semibold">{t(
+                activeSection === 'config' ? 'studyConfigurationTitle' :
+                activeSection === 'study' ? 'studyZoneTitle' :
+                activeSection === 'listening' ? 'continuousListeningTitle' :
+                activeSection === 'flashcards' ? 'flashcardGameTitle' :
+                activeSection === 'builder' ? 'sentenceBuilderTitle' :
+                'focusTimerTitle'
+            )}</span>
+          </div>
+          <div className={mainContentLayout}>
+            <div className="space-y-10 md:space-y-12">
+              {renderActiveSection()}
+              <Footer language={currentLanguage} />
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
+
+    
