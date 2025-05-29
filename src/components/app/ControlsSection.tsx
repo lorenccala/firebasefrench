@@ -54,12 +54,11 @@ const ControlsSection: FC<ControlsSectionProps> = ({
     }
   };
   
-  const handleSelectedChunkNumChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value)) {
-      onSelectedChunkNumChange(Math.max(0, Math.min(numChunks > 0 ? numChunks - 1 : 0, value - 1)));
-    } else if (e.target.value === '') {
-      onSelectedChunkNumChange(0);
+  const handleSelectedChunkNumChange = (value: string) => {
+    const num = parseInt(value, 10);
+    if (!isNaN(num)) {
+      // Value from SelectItem is 1-indexed, convert to 0-indexed
+      onSelectedChunkNumChange(Math.max(0, num - 1));
     }
   };
 
@@ -122,19 +121,29 @@ const ControlsSection: FC<ControlsSectionProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
           <div>
-            <Label htmlFor="chunk-num" className="text-sm font-medium">
+            <Label htmlFor="chunk-num-select" className="text-sm font-medium">
               {t('chunkNumberLabel', {numChunks: Math.max(1, numChunks)})}
             </Label>
-            <Input
-              id="chunk-num"
-              type="number"
-              value={numChunks === 0 ? 1 : selectedChunkNum + 1}
-              onChange={handleSelectedChunkNumChange}
-              min="1"
-              max={Math.max(1, numChunks)}
-              className="w-full mt-1"
+            <Select
+              value={String(numChunks === 0 ? 1 : selectedChunkNum + 1)}
+              onValueChange={handleSelectedChunkNumChange}
               disabled={isLoading || numChunks === 0 || allSentencesCount === 0}
-            />
+            >
+              <SelectTrigger id="chunk-num-select" className="w-full mt-1">
+                <SelectValue placeholder={t('chunkNumberLabel', {numChunks: Math.max(1, numChunks)})} />
+              </SelectTrigger>
+              <SelectContent>
+                {numChunks > 0 ? (
+                  Array.from({ length: numChunks }, (_, i) => i + 1).map((chunkNumber) => (
+                    <SelectItem key={chunkNumber} value={String(chunkNumber)}>
+                      {chunkNumber}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="1" disabled>1</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
           <Button
             onClick={onLoadChunk}
