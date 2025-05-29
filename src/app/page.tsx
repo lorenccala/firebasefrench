@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sentence, StudyMode } from '@/types';
-import { PLAYBACK_SPEEDS, DEFAULT_CHUNK_SIZE, MIN_CHUNK_SIZE, MAX_CHUNK_SIZE, DEFAULT_PRACTICE_TIME_MINUTES } from '@/lib/constants';
+import { PLAYBACK_SPEEDS, DEFAULT_CHUNK_SIZE, DEFAULT_PRACTICE_TIME_MINUTES } from '@/lib/constants'; // MIN_CHUNK_SIZE, MAX_CHUNK_SIZE no longer needed for direct input
 import { useTimer } from '@/hooks/use-timer';
 import { useToast } from '@/hooks/use-toast';
 import { translations, type Language } from '@/lib/translations';
@@ -18,7 +18,8 @@ import Footer from '@/components/app/Footer';
 import LanguageSwitcher from '@/components/app/LanguageSwitcher';
 import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft } from 'lucide-react';
+import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb } from 'lucide-react'; // Added Lightbulb for potential GrammarExplainer re-integration if needed
+import GrammarExplainer from '@/components/app/GrammarExplainer'; // Import GrammarExplainer
 import {
   SidebarProvider,
   Sidebar,
@@ -34,18 +35,18 @@ import {
 
 interface RawSentenceDataFromFile {
   id: string;
-  verb: string;
-  targetSentence: string;
+  verb: string; // French verb
+  targetSentence: string; // French sentence
   verbEnglish: string;
   englishSentence: string;
-  verbAlbanian: string;
-  albanianSentence: string;
+  verbAlbanian?: string; // Optional: if present in JSON
+  albanianSentence?: string; // Optional: if present in JSON
   audioSrcFr?: string;
   audioSrcEn?: string;
   audioSrcAl?: string;
 }
 
-type ActiveSection = 'config' | 'study' | 'listening' | 'flashcards' | 'builder' | 'timer';
+type ActiveSection = 'config' | 'study' | 'flashcards' | 'builder' | 'timer' | 'grammar'; // 'listening' removed, 'grammar' added
 
 export default function LinguaLeapPage() {
   const [allSentences, setAllSentences] = useState<Sentence[]>([]);
@@ -184,7 +185,7 @@ export default function LinguaLeapPage() {
           id: parseInt(item.id, 10),
           french: item.targetSentence,
           english: item.englishSentence,
-          albanianSentence: item.albanianSentence,
+          albanianSentence: item.albanianSentence || '',
           verbFrench: item.verb,
           verbEnglish: item.verbEnglish,
           verbAlbanian: item.verbAlbanian,
@@ -204,7 +205,7 @@ export default function LinguaLeapPage() {
     } finally {
       setIsInitialLoading(false);
     }
-  }, [showNotification]);
+  }, [showNotification, t]); // Added t to dependency array
 
   useEffect(() => { loadSentenceData(); }, [loadSentenceData]);
 
@@ -291,7 +292,7 @@ export default function LinguaLeapPage() {
   ) => {
     if (!originalSrc) {
       console.log(`Audio file play for lang "${lang}" (Play ID ${playId}) skipped: No source provided.`);
-      if (playRequestCounterRef.current === playId) onEndCallback(); // Critical to call onEnd if src is missing
+      if (playRequestCounterRef.current === playId) onEndCallback();
       return;
     }
 
@@ -449,13 +450,12 @@ export default function LinguaLeapPage() {
     let primaryAudioSrc: string | undefined;
     let primaryLang: 'fr' | 'al';
     let secondaryAudioSrc: string | undefined;
-    let secondaryLang: 'en' | 'al' | 'fr' | null = null; // Can be 'fr' if primary is 'al'
+    let secondaryLang: 'en' | 'al' | 'fr' | null = null;
 
-    // Determine primary and secondary based on UI language
     if (currentLanguage === 'al') {
-      primaryAudioSrc = sentence.audioSrcFr;
+      primaryAudioSrc = sentence.audioSrcFr; // French first
       primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcAl;
+      secondaryAudioSrc = sentence.audioSrcAl; // Albanian second
       secondaryLang = 'al';
     } else { // English UI or any other
       primaryAudioSrc = sentence.audioSrcFr;
@@ -693,47 +693,46 @@ export default function LinguaLeapPage() {
         );
       case 'study':
         return (
-          <StudyArea
-            language={currentLanguage}
-            sentence={currentSentenceData}
-            studyMode={studyMode}
-            isAnswerRevealed={isAnswerRevealed}
-            onRevealAnswer={handleRevealAnswer}
-            audioControls={{
-              isPlaying: isAudioPlaying,
-              onTogglePlayPause: togglePlayPause,
-              onPrev: handlePrevSentence,
-              onNext: handleNextSentence,
-              isLooping: isLooping,
-              onToggleLoop: () => setIsLooping(prev => !prev),
-              playbackSpeed: playbackSpeed,
-              onPlaybackSpeedChange: (speed) => {
-                setPlaybackSpeed(speed); 
-              },
-              disablePrev: currentSentenceIndex === 0,
-              disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,
-            }}
-            sentenceCounter={{
-              currentNum: currentChunkSentences.length > 0 ? currentSentenceIndex + 1 : 0,
-              totalInChunk: currentChunkSentences.length,
-              totalAll: allSentences.length,
-            }}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
-            allSentencesCount={allSentences.length}
-          />
-        );
-      case 'listening':
-        return (
-          <ContinuousListeningSection
-            language={currentLanguage}
-            isPlaying={isContinuousPlaying}
-            onPlayAll={handlePlayAllChunkAudio}
-            onStop={stopContinuousPlay} 
-            disabled={currentChunkSentences.length === 0 || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
-            currentSentenceIndex={isContinuousPlaying ? continuousPlayCurrentIndexRef.current : -1} 
-            totalSentencesInChunk={currentChunkSentences.length}
-            isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
-          />
+          <>
+            <StudyArea
+              language={currentLanguage}
+              sentence={currentSentenceData}
+              studyMode={studyMode}
+              isAnswerRevealed={isAnswerRevealed}
+              onRevealAnswer={handleRevealAnswer}
+              audioControls={{
+                isPlaying: isAudioPlaying,
+                onTogglePlayPause: togglePlayPause,
+                onPrev: handlePrevSentence,
+                onNext: handleNextSentence,
+                isLooping: isLooping,
+                onToggleLoop: () => setIsLooping(prev => !prev),
+                playbackSpeed: playbackSpeed,
+                onPlaybackSpeedChange: (speed) => {
+                  setPlaybackSpeed(speed); 
+                },
+                disablePrev: currentSentenceIndex === 0,
+                disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,
+              }}
+              sentenceCounter={{
+                currentNum: currentChunkSentences.length > 0 ? currentSentenceIndex + 1 : 0,
+                totalInChunk: currentChunkSentences.length,
+                totalAll: allSentences.length,
+              }}
+              isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
+              allSentencesCount={allSentences.length}
+            />
+            <ContinuousListeningSection
+              language={currentLanguage}
+              isPlaying={isContinuousPlaying}
+              onPlayAll={handlePlayAllChunkAudio}
+              onStop={stopContinuousPlay} 
+              disabled={currentChunkSentences.length === 0 || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+              currentSentenceIndex={isContinuousPlaying ? continuousPlayCurrentIndexRef.current : -1} 
+              totalSentencesInChunk={currentChunkSentences.length}
+              isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
+            />
+          </>
         );
       case 'flashcards':
         return (
@@ -767,6 +766,16 @@ export default function LinguaLeapPage() {
             showSwitchToNativeAlert={showSwitchToNativeAlert}
             onHideAlert={resetTimerAlert}
           />
+        );
+      case 'grammar':
+        return (
+           <div className="max-w-2xl mx-auto"> {/* Optional: Constrain width for better readability */}
+            <GrammarExplainer
+              language={currentLanguage}
+              sentence={currentSentenceData}
+              disabled={!currentSentenceData || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+            />
+          </div>
         );
       default:
         return null;
@@ -807,16 +816,6 @@ export default function LinguaLeapPage() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
-                onClick={() => setActiveSection('listening')}
-                isActive={activeSection === 'listening'}
-                tooltip={t('continuousListeningTitle')}
-              >
-                <Radio />
-                <span>{t('continuousListeningTitle')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
                 onClick={() => setActiveSection('flashcards')}
                 isActive={activeSection === 'flashcards'}
                 tooltip={t('flashcardGameTitle')}
@@ -833,6 +832,16 @@ export default function LinguaLeapPage() {
               >
                 <Dices />
                 <span>{t('sentenceBuilderTitle')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setActiveSection('grammar')}
+                isActive={activeSection === 'grammar'}
+                tooltip={t('grammarExplanationTitle')} 
+              >
+                <Lightbulb />
+                <span>{t('grammarExplanationTitle')}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -868,14 +877,14 @@ export default function LinguaLeapPage() {
             <span className="text-lg font-semibold">{t(
                 activeSection === 'config' ? 'studyConfigurationTitle' :
                 activeSection === 'study' ? 'studyZoneTitle' :
-                activeSection === 'listening' ? 'continuousListeningTitle' :
                 activeSection === 'flashcards' ? 'flashcardGameTitle' :
                 activeSection === 'builder' ? 'sentenceBuilderTitle' :
-                'focusTimerTitle'
+                activeSection === 'grammar' ? 'grammarExplanationTitle' :
+                'focusTimerTitle' // Assuming 'timer' is the last default
             )}</span>
           </div>
           <div className={mainContentLayout}>
-            <div className="space-y-10 md:space-y-12">
+            <div className="space-y-6 md:space-y-8"> {/* Adjusted spacing for sections */}
               {renderActiveSection()}
               <Footer language={currentLanguage} />
             </div>
@@ -885,3 +894,6 @@ export default function LinguaLeapPage() {
     </SidebarProvider>
   );
 }
+
+
+    

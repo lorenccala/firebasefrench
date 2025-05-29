@@ -20,7 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { type Sentence, StudyMode } from '@/types';
 import { PLAYBACK_SPEEDS } from '@/lib/constants';
 import { LoadingSpinner } from './LoadingSpinner';
-import GrammarExplainer from './GrammarExplainer';
+// GrammarExplainer removed from here
 import { translations, type Language } from '@/lib/translations';
 
 interface AudioControls {
@@ -67,7 +67,7 @@ const StudyArea: FC<StudyAreaProps> = ({
 }) => {
 
    const t = (key: keyof typeof translations, params?: Record<string, string | number | React.ReactNode>) => {
-    let text = translations[key] ? translations[key][language] : String(key);
+    let text = translations[key]?.[language] ?? String(key);
     if (params) {
       Object.entries(params).forEach(([paramKey, value]) => {
         text = text.replace(`{${paramKey}}`, String(value));
@@ -143,7 +143,18 @@ const StudyArea: FC<StudyAreaProps> = ({
   const progressPercentage = sentenceCounter.totalInChunk > 0 ? (sentenceCounter.currentNum / sentenceCounter.totalInChunk) * 100 : 0;
   
   const targetSentenceText = sentence ? sentence.french : '';
-  const translationText = language === 'al' && sentence ? sentence.albanianSentence : (sentence ? sentence.english : '');
+  let translationText = '';
+  let verbDisplay = '';
+
+  if (sentence) {
+    if (language === 'al') {
+      translationText = sentence.albanianSentence || '';
+      verbDisplay = sentence.verbFrench ? `${sentence.verbFrench}${sentence.verbAlbanian ? ` (${sentence.verbAlbanian})` : ''}` : '';
+    } else { // Default to English UI
+      translationText = sentence.english || '';
+      verbDisplay = sentence.verbFrench ? `${sentence.verbFrench}${sentence.verbEnglish ? ` (${t('verbToLabel')} ${sentence.verbEnglish})` : ''}` : '';
+    }
+  }
 
 
   return (
@@ -161,19 +172,13 @@ const StudyArea: FC<StudyAreaProps> = ({
         {sentence ? (
           <div className="p-6 rounded-lg bg-muted/50 min-h-[160px] flex flex-col justify-center shadow-inner">
             <div className="min-h-[100px] mb-4 flex flex-col justify-center">
-              { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && sentence.verbFrench && (
+              { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && verbDisplay && (
                 <div className="mb-3 text-center">
                   <p className="text-sm text-muted-foreground" data-ai-hint="verb conjugation">
                     {t('verbLabel')}:{' '}
                     <span className="font-semibold text-primary">
-                      {sentence.verbFrench}
+                      {verbDisplay}
                     </span>
-                    {language === 'al' && sentence.verbAlbanian && (
-                      <span className="ml-1">({sentence.verbAlbanian})</span>
-                    )}
-                    {language === 'en' && sentence.verbEnglish && (
-                      <span className="ml-1">({t('verbToLabel')} {sentence.verbEnglish})</span>
-                    )}
                   </p>
                 </div>
               )}
@@ -247,11 +252,11 @@ const StudyArea: FC<StudyAreaProps> = ({
             </Alert>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t">
+      <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6 border-t">
         <p className="text-xs text-muted-foreground">
           {t('audioSourceInfoFile')}
         </p>
-        <GrammarExplainer language={language} sentence={sentence} disabled={!sentence || isLoading} />
+        {/* GrammarExplainer removed from here */}
       </CardFooter>
     </Card>
   );
