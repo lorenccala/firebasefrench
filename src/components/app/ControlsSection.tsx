@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -53,7 +54,7 @@ const ControlsSection: FC<ControlsSectionProps> = ({
   const handleSelectedChunkNumChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
-      onSelectedChunkNumChange(Math.max(0, Math.min(numChunks > 0 ? numChunks - 1 : 0, value -1)));
+      onSelectedChunkNumChange(Math.max(0, Math.min(numChunks > 0 ? numChunks - 1 : 0, value - 1)));
     } else if (e.target.value === '') {
       onSelectedChunkNumChange(0);
     }
@@ -115,7 +116,7 @@ const ControlsSection: FC<ControlsSectionProps> = ({
             <Input
               id="chunk-num"
               type="number"
-              value={numChunks === 0 ? 0 : selectedChunkNum + 1}
+              value={numChunks === 0 ? 1 : selectedChunkNum + 1}
               onChange={handleSelectedChunkNumChange}
               min="1"
               max={Math.max(1, numChunks)}
