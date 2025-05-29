@@ -9,99 +9,99 @@ body {
 
 @layer base {
   :root {
-    --background: 45 33% 96%; /* Very light, slightly desaturated Apple Core for overall page */
-    --foreground: 210 12% 25%; /* Darker muted Blueberry for text */
+    --background: 0 0% 97%; /* Very light gray, almost white */
+    --foreground: 215 15% 28%; /* Dark slate gray for text */
 
-    --muted: 45 25% 90%; /* Lighter, more desaturated Apple Core for subtle elements */
-    --muted-foreground: 210 10% 45%; /* Muted Blueberry for less important text */
+    --muted: 210 20% 94%; /* Lighter gray for subtle elements */
+    --muted-foreground: 215 10% 50%; /* Muted gray for less important text */
 
-    --popover: 38 50% 98%; /* Very light, almost white, warm off-white */
-    --popover-foreground: 210 12% 25%;
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 215 15% 28%;
 
-    --card: var(--background); /* Use page background color for cards in light mode */
-    --card-foreground: 210 12% 25%;
+    --card: 0 0% 100%; /* White for cards to stand out slightly */
+    --card-foreground: 215 15% 28%;
 
-    --border: 45 25% 85%; /* Slightly darker Apple Core */
-    --input: 45 25% 88%; /* Similar to border or slightly lighter Apple Core */
+    --border: 210 20% 88%; /* Slightly darker light gray */
+    --input: 210 20% 92%; /* Similar to border or slightly lighter */
 
-    --primary: 29 93% 58%; /* Apricot */
+    --primary: 145 75% 40%; /* Duolingo Green */
     --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 213 27% 45%; /* Blueberry */
+    --secondary: 205 85% 50%; /* Duolingo Blue */
     --secondary-foreground: 0 0% 100%; /* White */
 
-    --accent: 45 92% 58%; /* Citrus */
-    --accent-foreground: 30 50% 25%; /* Dark Apricot/Brown for contrast on Citrus */
+    --accent: 35 95% 55%; /* Duolingo Orange */
+    --accent-foreground: 0 0% 100%; /* White (can be adjusted if orange is too light for white text) */
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%; /* Standard Red */
+    --destructive-foreground: 0 0% 98%; /* White */
 
-    --ring: 29 93% 53%; /* Slightly darker Apricot for focus */
+    --ring: 145 75% 35%; /* Slightly darker Green for focus */
 
     --radius: 0.5rem;
 
     /* Sidebar specific colors - will mirror main theme */
-    --sidebar-background: 45 33% 96%;
-    --sidebar-foreground: 210 12% 25%;
-    --sidebar-primary: 29 93% 58%;
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 215 15% 28%;
+    --sidebar-primary: 145 75% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 45 92% 58%;
-    --sidebar-accent-foreground: 30 50% 25%;
-    --sidebar-border: 45 25% 85%;
-    --sidebar-ring: 29 93% 53%;
+    --sidebar-accent: 35 95% 55%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 145 75% 35%;
 
-    --chart-1: 29 93% 58%;   /* Apricot */
-    --chart-2: 213 27% 45%;  /* Blueberry */
-    --chart-3: 45 92% 58%;   /* Citrus */
-    --chart-4: 29 93% 75%;   /* Lighter Apricot */
-    --chart-5: 213 27% 70%;  /* Lighter Blueberry */
+    --chart-1: 145 75% 40%;   /* Primary Green */
+    --chart-2: 205 85% 50%;  /* Secondary Blue */
+    --chart-3: 35 95% 55%;   /* Accent Orange */
+    --chart-4: 145 75% 60%;   /* Lighter Green */
+    --chart-5: 205 85% 70%;  /* Lighter Blue */
   }
 
   .dark {
-    --background: 213 15% 18%; /* Dark Blueberry */
-    --foreground: 45 30% 88%; /* Light Apple Core for text */
+    --background: 220 13% 12%; /* Darker, almost black blue-gray */
+    --foreground: 210 30% 90%; /* Light gray for text */
 
-    --muted: 210 12% 15%; /* Darker muted Blueberry */
-    --muted-foreground: 210 10% 55%; /* Lighter muted Blueberry */
+    --muted: 220 13% 18%; /* Dark blue-gray */
+    --muted-foreground: 210 20% 65%; /* Lighter muted gray */
 
-    --popover: 213 15% 12%; /* Darker Blueberry for popovers */
-    --popover-foreground: 45 30% 88%;
+    --popover: 220 13% 10%; /* Even darker for popovers */
+    --popover-foreground: 210 30% 90%;
 
-    --card: 213 15% 22%; /* Slightly lighter Dark Blueberry for cards */
-    --card-foreground: 45 30% 88%;
+    --card: 220 13% 16%; /* Slightly lighter than background for cards */
+    --card-foreground: 210 30% 90%;
 
-    --border: 210 12% 28%; /* Muted Blueberry for borders */
-    --input: 210 12% 30%; /* Slightly lighter Muted Blueberry for inputs */
+    --border: 220 13% 30%; /* Muted dark border */
+    --input: 220 13% 25%; /* Muted dark input */
 
-    --primary: 29 85% 65%; /* Brighter Apricot for dark mode */
-    --primary-foreground: 30 50% 15%; /* Very dark Apricot/Brown */
+    --primary: 145 65% 48%; /* Brighter Duolingo Green for dark mode */
+    --primary-foreground: 0 0% 100%; 
 
-    --secondary: 213 27% 55%; /* Blueberry - slightly lighter for dark mode */
-    --secondary-foreground: 0 0% 100%; /* White */
+    --secondary: 205 75% 58%; /* Brighter Duolingo Blue for dark mode */
+    --secondary-foreground: 0 0% 100%;
 
-    --accent: 45 85% 65%; /* Brighter Citrus for dark mode */
-    --accent-foreground: 30 50% 15%; /* Very dark Apricot/Brown */
+    --accent: 35 90% 60%; /* Brighter Duolingo Orange for dark mode */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 63% 40%;
+    --destructive: 0 63% 45%; /* Darker red */
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 29 85% 60%; /* Brighter Apricot for focus rings */
+    --ring: 145 65% 42%; /* Brighter Green for focus rings */
     
-    /* Sidebar specific colors - dark mode - will mirror main theme */
-    --sidebar-background: 213 15% 18%;
-    --sidebar-foreground: 45 30% 88%;
-    --sidebar-primary: 29 85% 65%;
-    --sidebar-primary-foreground: 30 50% 15%;
-    --sidebar-accent: 45 85% 65%;
-    --sidebar-accent-foreground: 30 50% 15%;
-    --sidebar-border: 210 12% 28%;
-    --sidebar-ring: 29 85% 60%;
+    /* Sidebar specific colors - dark mode */
+    --sidebar-background: 220 13% 12%;
+    --sidebar-foreground: 210 30% 90%;
+    --sidebar-primary: 145 65% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 35 90% 60%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 13% 30%;
+    --sidebar-ring: 145 65% 42%;
 
-    --chart-1: 29 85% 65%;   /* Apricot */
-    --chart-2: 213 27% 55%;  /* Blueberry */
-    --chart-3: 45 85% 65%;   /* Citrus */
-    --chart-4: 29 85% 80%;   /* Lighter Apricot */
-    --chart-5: 213 27% 75%;  /* Lighter Blueberry */
+    --chart-1: 145 65% 48%;   /* Primary Green (Dark) */
+    --chart-2: 205 75% 58%;  /* Secondary Blue (Dark) */
+    --chart-3: 35 90% 60%;   /* Accent Orange (Dark) */
+    --chart-4: 145 65% 65%;   /* Lighter Green (Dark) */
+    --chart-5: 205 75% 75%;  /* Lighter Blue (Dark) */
   }
 }
 
@@ -111,8 +111,8 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    /* Apply a subtle gradient for a more polished look */
-    @apply bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--muted))]; 
+    /* Apply a subtle gradient for a more polished look, reflecting the new background */
+    @apply bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--muted)/0.5)]; 
   }
 }
 
@@ -126,9 +126,10 @@ body {
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--accent));
+  background: hsl(var(--accent)); /* Orange scrollbar thumb */
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary));
+  background: hsl(var(--primary)); /* Green on hover */
 }
+
