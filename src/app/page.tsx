@@ -326,38 +326,58 @@ export default function LinguaLeapPage() {
       }
     };
 
-    audioRef.current.onerror = (e) => {
-      const audioElement = e.target as HTMLAudioElement;
-      const errorDetails = audioElement.error;
-      let errorMessage = 'Unknown audio error';
-      if (errorDetails) {
-        switch (errorDetails.code) {
-          case MediaError.MEDIA_ERR_ABORTED:
-            errorMessage = 'Playback aborted by the user.';
-            break;
-          case MediaError.MEDIA_ERR_NETWORK:
-            errorMessage = 'A network error caused the audio download to fail.';
-            break;
-          case MediaError.MEDIA_ERR_DECODE:
-            errorMessage = 'The audio playback was aborted due to a corruption problem or because the audio used features your browser did not support.';
-            break;
-          case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-             errorMessage = `The audio source is not supported or couldn't be found (Code: ${errorDetails.code}). Ensure audio files are in the 'public/data/' directory and paths in data.json are relative to that (e.g., 'audio/file.mp3' for a file at 'public/data/audio/file.mp3').`;
-            break;
-          default:
-            errorMessage = `An unknown error occurred (Code: ${errorDetails.code}).`;
-        }
+    audioRef.current.onerror = (e: Event) => {
+    const target = e.target;
+
+    if (!(target instanceof HTMLAudioElement)) {
+      console.error("Unexpected event target:", target);
+      return;
+    }
+
+    const audioElement = target;
+    const errorDetails = audioElement.error;
+    let errorMessage = 'Unknown audio error';
+
+    if (errorDetails) {
+      switch (errorDetails.code) {
+        case MediaError.MEDIA_ERR_ABORTED:
+          errorMessage = 'Playback aborted by the user.';
+          break;
+        case MediaError.MEDIA_ERR_NETWORK:
+          errorMessage = 'A network error caused the audio download to fail.';
+          break;
+        case MediaError.MEDIA_ERR_DECODE:
+          errorMessage = 'Audio playback failed due to a corruption issue or unsupported features.';
+          break;
+        case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+          errorMessage = `Audio source not supported or not found (Code: ${errorDetails.code}). ` +
+            `Ensure files are in 'public/data/' and paths in data.json are relative ` +
+            `(e.g., 'audio/file.mp3' for 'public/data/audio/file.mp3').`;
+          break;
+        default:
+          errorMessage = `Unknown error occurred (Code: ${errorDetails.code}).`;
       }
-      console.error(`HTMLAudioElement.onerror - Event:`, e, `\nCode: ${errorDetails?.code}`, `\nMessage: ${errorMessage}`, `\nSrc: "${finalSrcPath}"`, `\nLang: ${lang}`);
-      showNotification("errorPlayingAudio", "destructive", {
-          source: `${lang} (${finalSrcPath}) - Error: ${errorMessage}`
-      });
-      if (playRequestCounterRef.current === playId) {
-        setIsAudioPlaying(false);
-        setCurrentAudioSrcType(null);
-        onEndCallback();
-      }
-    };
+    }
+
+    console.error(
+      "HTMLAudioElement.onerror - Event:", e,
+      "\nCode:", errorDetails?.code,
+      "\nMessage:", errorMessage,
+      `\nSrc: "${finalSrcPath}"`,
+      `\nLang: ${lang}`
+    );
+
+    showNotification("errorPlayingAudio", "destructive", {
+      source: `${lang} (${finalSrcPath}) - Error: ${errorMessage}`
+    });
+
+    if (playRequestCounterRef.current === playId) {
+      setIsAudioPlaying(false);
+      setCurrentAudioSrcType(null);
+      onEndCallback();
+    }
+  };
+
 
     audioRef.current.load();
 
