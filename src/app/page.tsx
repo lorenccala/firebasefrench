@@ -665,7 +665,7 @@ export default function LinguaLeapPage() {
               onNext: handleNextSentence,
               isLooping: isLooping,
               onToggleLoop: () => setIsLooping(prev => !prev),
-              isPlayButtonDisabled: isPlayButtonDisabled,
+              // isPlayButtonDisabled: isPlayButtonDisabled, // This line was removed
               playbackSpeed: playbackSpeed,
               onPlaybackSpeedChange: (speed) => {
                 setPlaybackSpeed(speed);
