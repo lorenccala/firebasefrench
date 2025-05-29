@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input'; // Keep for chunk number if still needed, or remove if not
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StudyMode } from '@/types';
 import { MIN_CHUNK_SIZE, MAX_CHUNK_SIZE } from '@/lib/constants';
@@ -32,6 +32,8 @@ interface ControlsSectionProps {
   isLoading: boolean;
 }
 
+const CHUNK_SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 40, 50];
+
 const ControlsSection: FC<ControlsSectionProps> = ({
   language,
   studyMode,
@@ -45,12 +47,10 @@ const ControlsSection: FC<ControlsSectionProps> = ({
   allSentencesCount,
   isLoading,
 }) => {
-  const handleChunkSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value)) {
-      onChunkSizeChange(Math.max(MIN_CHUNK_SIZE, Math.min(MAX_CHUNK_SIZE, value)));
-    } else if (e.target.value === '') {
-       onChunkSizeChange(MIN_CHUNK_SIZE);
+  const handleChunkSizeChange = (value: string) => {
+    const size = parseInt(value, 10);
+    if (!isNaN(size)) {
+      onChunkSizeChange(size);
     }
   };
   
@@ -105,17 +105,23 @@ const ControlsSection: FC<ControlsSectionProps> = ({
             </Select>
           </div>
           <div>
-            <Label htmlFor="chunk-size" className="text-sm font-medium">{t('sentencesPerChunkLabel', {min: MIN_CHUNK_SIZE, max: MAX_CHUNK_SIZE})}</Label>
-            <Input
-              id="chunk-size"
-              type="number"
-              value={chunkSize}
-              onChange={handleChunkSizeChange}
-              min={MIN_CHUNK_SIZE}
-              max={MAX_CHUNK_SIZE}
-              className="w-full mt-1"
+            <Label htmlFor="chunk-size-select" className="text-sm font-medium">{t('sentencesPerChunkLabelSelect')}</Label>
+            <Select
+              value={String(chunkSize)}
+              onValueChange={handleChunkSizeChange}
               disabled={isLoading || allSentencesCount === 0}
-            />
+            >
+              <SelectTrigger id="chunk-size-select" className="w-full mt-1">
+                <SelectValue placeholder={t('sentencesPerChunkLabelSelect')} />
+              </SelectTrigger>
+              <SelectContent>
+                {CHUNK_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

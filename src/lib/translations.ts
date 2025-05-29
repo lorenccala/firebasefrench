@@ -8,6 +8,7 @@ export const translations = {
   studyConfigurationDescription: { en: "Customize your learning session. Total sentences available: {count}.", al: "Personalizoni sesionin tuaj të mësimit. Numri total i fjalive në dispozicion: {count}." },
   studyModeLabel: { en: "Study Mode", al: "Mënyra e Studimit" },
   sentencesPerChunkLabel: { en: "Sentences per Chunk ({min}-{max})", al: "Fjali për Grup ({min}-{max})" },
+  sentencesPerChunkLabelSelect: { en: "Sentences per Chunk", al: "Fjali për Grup" },
   chunkNumberLabel: { en: "Chunk Number (1 to {numChunks})", al: "Numri i Grupit (1 deri {numChunks})" },
   loadChunkButton: { en: "Load Chunk", al: "Ngarko Grupin" },
   currentChunkInfo: { en: "Currently selecting chunk {selected} of {total}. Each chunk has up to {size} sentences.", al: "Aktualisht po zgjidhni grupin {selected} nga {total}. Çdo grup ka deri në {size} fjali." },
