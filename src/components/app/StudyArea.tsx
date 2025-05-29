@@ -142,7 +142,7 @@ const StudyArea: FC<StudyAreaProps> = ({
 
   const progressPercentage = sentenceCounter.totalInChunk > 0 ? (sentenceCounter.currentNum / sentenceCounter.totalInChunk) * 100 : 0;
   
-  const targetSentenceText = sentence ? sentence.french : ''; // Always show French sentence as primary
+  const targetSentenceText = sentence ? sentence.french : '';
   const translationText = language === 'al' && sentence ? sentence.albanianSentence : (sentence ? sentence.english : '');
 
 
@@ -249,7 +249,7 @@ const StudyArea: FC<StudyAreaProps> = ({
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t">
         <p className="text-xs text-muted-foreground">
-          {t('audioSourceInfoTTS')}
+          {t('audioSourceInfoFile')}
         </p>
         <GrammarExplainer language={language} sentence={sentence} disabled={!sentence || isLoading} />
       </CardFooter>
@@ -258,4 +258,3 @@ const StudyArea: FC<StudyAreaProps> = ({
 };
 
 export default StudyArea;
-

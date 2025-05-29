@@ -3,10 +3,13 @@ export interface Sentence {
   id: number;
   french: string;
   english: string;
-  albanianSentence: string; // Added for Albanian sentence
+  albanianSentence: string;
   verbFrench?: string;
   verbEnglish?: string;
-  verbAlbanian?: string; // Added for Albanian verb
+  verbAlbanian?: string;
+  audioSrcFr?: string;
+  audioSrcEn?: string;
+  audioSrcAl?: string;
 }
 
 export enum StudyMode {
