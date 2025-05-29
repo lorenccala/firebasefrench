@@ -44,6 +44,7 @@ export default function LinguaLeapPage() {
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [isChunkLoading, setIsChunkLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPlayButtonDisabled, setIsPlayButtonDisabled] = useState(false);
 
   const { toast } = useToast();
 
@@ -509,19 +510,26 @@ export default function LinguaLeapPage() {
 
 
   const togglePlayPause = useCallback(() => {
+    if (isPlayButtonDisabled) return;
+    
+    setIsPlayButtonDisabled(true);
+    
     if (isAudioPlayingRef.current) {
       console.log("TogglePlayPause: Stopping audio.");
       stopAudio();
       if(isContinuousPlayingRef.current) {
         stopContinuousPlay();
       }
+      setIsPlayButtonDisabled(false);
     } else {
       if (currentChunkSentencesRef.current.length > 0) {
         console.log("TogglePlayPause: Starting audio sequence.");
-        playAudioSequence();
+        playAudioSequence().finally(() => setIsPlayButtonDisabled(false));
       } else {
         showNotification("noSentenceToPlay", "destructive");
+        setIsPlayButtonDisabled(false);
       }
+
     }
   }, [playAudioSequence, stopAudio, showNotification, stopContinuousPlay]);
 
@@ -643,6 +651,7 @@ export default function LinguaLeapPage() {
               onNext: handleNextSentence,
               isLooping: isLooping,
               onToggleLoop: () => setIsLooping(prev => !prev),
+              isPlayButtonDisabled: isPlayButtonDisabled,
               playbackSpeed: playbackSpeed,
               onPlaybackSpeedChange: (speed) => {
                 setPlaybackSpeed(speed);
