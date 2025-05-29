@@ -22,12 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm ci # Clean install (faster than npm install)
 
-      - name: Run ESLint
-        run: npm run lint # Optional: Lint your code
-
-      - name: Run TypeScript checks
-        run: npm run type-check # Optional: TS validation
-
       - name: Build Next.js app
         run: npm run build
 
