@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -27,6 +28,7 @@ export async function explainGrammar(input: ExplainGrammarInput): Promise<Explai
 
 const prompt = ai.definePrompt({
   name: 'explainGrammarPrompt',
+  model: 'googleai/gemma-7b-it', // Specify Gemma model here
   input: {schema: ExplainGrammarInputSchema},
   output: {schema: ExplainGrammarOutputSchema},
   prompt: `You are a helpful AI assistant specialized in explaining grammatical concepts.
