@@ -106,7 +106,11 @@ export default function LinguaLeapPage() {
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = '';
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
+        audioRef.current.oncanplaythrough = null;
+        audioRef.current.onended = null;
+        audioRef.current.onerror = null;
         audioRef.current = null;
       }
       if (audioSequenceDelayTimeoutRef.current) {
@@ -197,10 +201,9 @@ export default function LinguaLeapPage() {
     playRequestCounterRef.current++; 
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.removeAttribute('src'); // Use removeAttribute instead of setting src to ''
-      audioRef.current.load(); // Call load to ensure the current source is aborted.
+      audioRef.current.removeAttribute('src'); 
+      audioRef.current.load(); 
       
-      // Remove event listeners to prevent them from firing for stale requests
       audioRef.current.oncanplaythrough = null;
       audioRef.current.onended = null;
       audioRef.current.onerror = null;
@@ -330,15 +333,15 @@ export default function LinguaLeapPage() {
             errorMessage = 'The audio playback was aborted due to a corruption problem or because the audio used features your browser did not support.';
             break;
           case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            errorMessage = `The audio source for ${lang} (${formattedSrc}) is not supported or couldn't be found. (Code: ${errorDetails.code})`;
+            errorMessage = `The audio source is not supported or couldn't be found (Code: ${errorDetails.code}). Ensure audio files are in the 'public' directory and paths in data.json are correct (e.g., /audio/file.mp3).`;
             break;
           default:
             errorMessage = `An unknown error occurred (Code: ${errorDetails.code}).`;
         }
       }
-      console.error(`HTMLAudioElement.onerror - Code: ${errorDetails?.code}`, `Message: ${errorMessage}`, `Src: "${formattedSrc}"`, `Lang: ${lang}`, e);
+      console.error(`HTMLAudioElement.onerror - Event:`, e, `\nCode: ${errorDetails?.code}`, `\nMessage: ${errorMessage}`, `\nSrc: "${formattedSrc}"`, `\nLang: ${lang}`);
       showNotification("errorPlayingAudio", "destructive", { 
-          source: `${lang} (${formattedSrc}) - Error: ${errorDetails?.code || 'unknown'}` 
+          source: `${lang} (${formattedSrc}) - Error: ${errorMessage}` 
       });
       if (playRequestCounterRef.current === playId) {
         setIsAudioPlaying(false);
@@ -389,16 +392,15 @@ export default function LinguaLeapPage() {
     let secondaryAudioSrc: string | undefined;
     let secondaryLang: 'en' | 'al' | null = null;
 
-    // Determine audio sources based on UI language
     if (currentLanguageRef.current === 'al') {
-      primaryAudioSrc = sentence.audioSrcFr; // French first
+      primaryAudioSrc = sentence.audioSrcFr;
       primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcAl; // Then Albanian
+      secondaryAudioSrc = sentence.audioSrcAl;
       secondaryLang = 'al';
-    } else { // Default to English UI
-      primaryAudioSrc = sentence.audioSrcFr; // French first
+    } else { 
+      primaryAudioSrc = sentence.audioSrcFr;
       primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcEn; // Then English
+      secondaryAudioSrc = sentence.audioSrcEn;
       secondaryLang = 'en';
     }
     
@@ -682,3 +684,4 @@ export default function LinguaLeapPage() {
     </div>
   );
 }
+
