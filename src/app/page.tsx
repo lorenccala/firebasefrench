@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -15,6 +16,19 @@ import Footer from '@/components/app/Footer';
 import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
+
+// Define an interface for the raw data structure from JSON
+interface RawSentenceData {
+  id: string;
+  verb: string;
+  targetSentence: string;
+  verbEnglish: string;
+  englishSentence: string;
+  verbAlbanian: string;
+  albanianSentence: string;
+  audioSrcEn?: string;
+  audioSrcFr?: string;
+}
 
 export default function LinguaLeapPage() {
   const [allSentences, setAllSentences] = useState<Sentence[]>([]);
@@ -97,13 +111,20 @@ export default function LinguaLeapPage() {
     try {
       const response = await fetch('/data/data.json');
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      const data = await response.json();
-      if (!Array.isArray(data) || data.length === 0) {
-        // This case is handled by the UI, but we can still log it or set a specific error
+      const rawData: RawSentenceData[] = await response.json();
+      
+      if (!Array.isArray(rawData) || rawData.length === 0) {
         console.warn("No sentences found or data is not in expected format.");
         setAllSentences([]);
       } else {
-        setAllSentences(data as Sentence[]);
+        const transformedSentences: Sentence[] = rawData.map(item => ({
+          id: parseInt(item.id, 10),
+          french: item.targetSentence,
+          english: item.englishSentence,
+          audioSrcFr: item.audioSrcFr,
+          audioSrcEn: item.audioSrcEn,
+        }));
+        setAllSentences(transformedSentences);
         showNotification("Sentence data loaded successfully!");
       }
     } catch (err) {
@@ -584,3 +605,5 @@ export default function LinguaLeapPage() {
     </div>
   );
 }
+
+    
