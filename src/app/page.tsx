@@ -13,12 +13,13 @@ import StudyArea from '@/components/app/StudyArea';
 import ContinuousListeningSection from '@/components/app/ContinuousListeningSection';
 import FlashcardGame from '@/components/app/FlashcardGame';
 import SentenceBuilderGame from '@/components/app/SentenceBuilderGame';
+import FillInTheBlanksGame from '@/components/app/FillInTheBlanksGame';
 import NativeContentSwitchSection from '@/components/app/NativeContentSwitchSection';
 import Footer from '@/components/app/Footer';
 import LanguageSwitcher from '@/components/app/LanguageSwitcher';
 import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb, UserCircle } from 'lucide-react'; 
+import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb, UserCircle, PencilLine } from 'lucide-react'; 
 import GrammarExplainer from '@/components/app/GrammarExplainer';
 import {
   SidebarProvider,
@@ -46,7 +47,7 @@ interface RawSentenceDataFromFile {
   audioSrcAl?: string;
 }
 
-type ActiveSection = 'config' | 'study' | 'flashcards' | 'builder' | 'timer' | 'grammar';
+type ActiveSection = 'config' | 'study' | 'flashcards' | 'builder' | 'fillblanks' | 'timer' | 'grammar';
 
 export default function ProntoLingoPage() {
   const [allSentences, setAllSentences] = useState<Sentence[]>([]);
@@ -448,7 +449,7 @@ export default function ProntoLingoPage() {
     console.log(`PlayAudioSequence (ID ${currentPlayId}): Starting for sentence ID ${sentence.id}`);
 
     let primaryAudioSrc: string | undefined;
-    let primaryLang: 'fr'; // Always French first
+    let primaryLang: 'fr';
     let secondaryAudioSrc: string | undefined;
     let secondaryLang: 'en' | 'al' | null = null;
 
@@ -458,7 +459,7 @@ export default function ProntoLingoPage() {
     if (currentLanguage === 'al') {
       secondaryAudioSrc = sentence.audioSrcAl;
       secondaryLang = 'al';
-    } else { // Default to English for secondary if UI is not Albanian
+    } else { 
       secondaryAudioSrc = sentence.audioSrcEn;
       secondaryLang = 'en';
     }
@@ -753,6 +754,18 @@ export default function ProntoLingoPage() {
             totalSentencesInChunk={currentChunkSentences.length}
           />
         );
+      case 'fillblanks':
+        return (
+          <FillInTheBlanksGame
+            language={currentLanguage}
+            sentence={currentSentenceData}
+            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+            onNextSentence={handleNextSentence}
+            onPrevSentence={handlePrevSentence}
+            currentSentenceIndex={currentSentenceIndex}
+            totalSentencesInChunk={currentChunkSentences.length}
+          />
+        );
       case 'timer':
         return (
           <NativeContentSwitchSection
@@ -835,6 +848,16 @@ export default function ProntoLingoPage() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
+                onClick={() => setActiveSection('fillblanks')}
+                isActive={activeSection === 'fillblanks'}
+                tooltip={t('fillInTheBlanksTitle')}
+              >
+                <PencilLine />
+                <span>{t('fillInTheBlanksTitle')}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
                 onClick={() => setActiveSection('grammar')}
                 isActive={activeSection === 'grammar'}
                 tooltip={t('grammarExplanationTitle')} 
@@ -878,6 +901,7 @@ export default function ProntoLingoPage() {
                 activeSection === 'study' ? 'studyZoneTitle' :
                 activeSection === 'flashcards' ? 'flashcardGameTitle' :
                 activeSection === 'builder' ? 'sentenceBuilderTitle' :
+                activeSection === 'fillblanks' ? 'fillInTheBlanksTitle' :
                 activeSection === 'grammar' ? 'grammarExplanationTitle' :
                 'focusTimerTitle' 
             )}</span>

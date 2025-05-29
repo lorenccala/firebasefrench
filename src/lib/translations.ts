@@ -98,12 +98,26 @@ export const translations = {
   prevSentenceButton: { en: "Prev Sentence", al: "Fjalia Para" },
   nextSentenceButton: { en: "Next Sentence", al: "Fjalia Tjetër" },
 
+  // Fill in the Blanks Game
+  fillInTheBlanksTitle: { en: "Fill in the Blanks", al: "Plotëso Boshllëqet" },
+  fillInTheBlanksDescription: { en: "Complete the French sentence by typing the missing verb.", al: "Plotësoni fjalinë frënge duke shtypur foljen që mungon." },
+  fillInBlanksInputLabel: { en: "Your answer for the blank", al: "Përgjigja juaj për boshllëkun" },
+  fillInBlanksCorrect: { en: "Correct! The missing word was \"<strong>{answer}</strong>\".", al: "Saktë! Fjala që mungonte ishte \"<strong>{answer}</strong>\"." },
+  fillInBlanksIncorrect: { en: "Not quite. The correct word is \"<strong>{correctAnswer}</strong>\".", al: "Jo saktësisht. Fjala e saktë është \"<strong>{correctAnswer}</strong>\"." },
+  fillInBlanksHintLabel: { en: "Hint (English Translation)", al: "Ndihmë (Përkthimi Anglisht/Shqip)" },
+  fillInBlanksNoChallenge: { en: "Cannot check answer. No challenge loaded.", al: "Nuk mund të kontrollohet përgjigja. Asnjë sfidë e ngarkuar." },
+  fillInBlanksErrorCreating: { en: "Could not create a fill-in-the-blank challenge for this sentence. The verb might not be in the sentence as expected.", al: "Nuk mund të krijohej një sfidë plotëso-boshllëqet për këtë fjali. Folja mund të mos jetë në fjali siç pritej." },
+  fillInBlanksCannotCreate: {en: "Cannot create a fill-in-the-blank challenge. No sentence or verb data.", al: "Nuk mund të krijohet një sfidë plotëso-boshllëqet. Nuk ka të dhëna për fjali ose folje."},
+  fillInBlanksVerbNotFoundInSentence: {en: "Could not find the main verb in this sentence to create a blank. Please try another sentence.", al: "Nuk u gjet folja kryesore në këtë fjali për të krijuar një boshllëk. Ju lutem provoni një fjali tjetër."},
+
+
   // Sidebar specific (can reuse some from above)
   sidebarConfiguration: { en: "Configuration", al: "Konfigurimi" },
   sidebarStudyZone: { en: "Study Zone", al: "Zona e Studimit" },
-  sidebarListening: { en: "Listening", al: "Dëgjimi" },
+  sidebarListening: { en: "Listening", al: "Dëgjimi" }, // May be removed if integrated
   sidebarFlashcards: { en: "Flashcards", al: "Kartelet" },
   sidebarSentenceBuilder: { en: "Sentence Builder", al: "Ndërtuesi" },
+  sidebarFillInTheBlanks: { en: "Fill Blanks", al: "Plotëso" },
   sidebarFocusTimer: { en: "Focus Timer", al: "Kohëmatësi" },
   sidebarGrammarExplanation: { en: "Grammar AI", al: "Gramatika AI" },
 };
