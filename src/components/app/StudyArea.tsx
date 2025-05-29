@@ -70,11 +70,9 @@ const StudyArea: FC<StudyAreaProps> = ({
     let text = translations[key] ? translations[key][language] : String(key);
     if (params) {
       Object.entries(params).forEach(([paramKey, value]) => {
-        // This is a naive replace, might need more robust solution for ReactNode
         text = text.replace(`{${paramKey}}`, String(value));
       });
     }
-    // For strings that might contain HTML (like the description)
     if (key === 'studyZoneDescription' && params?.mode) {
         return <span dangerouslySetInnerHTML={{ __html: text }} />;
     }
@@ -143,6 +141,9 @@ const StudyArea: FC<StudyAreaProps> = ({
   }
 
   const progressPercentage = sentenceCounter.totalInChunk > 0 ? (sentenceCounter.currentNum / sentenceCounter.totalInChunk) * 100 : 0;
+  
+  const targetSentenceText = language === 'al' && sentence ? sentence.albanianSentence : (sentence ? sentence.french : '');
+  const translationText = sentence ? sentence.english : '';
 
   return (
     <Card className="shadow-lg w-full">
@@ -162,16 +163,21 @@ const StudyArea: FC<StudyAreaProps> = ({
               { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && sentence.verbFrench && sentence.verbEnglish && (
                 <div className="mb-3 text-center">
                   <p className="text-sm text-muted-foreground" data-ai-hint="verb conjugation">
-                    {t('verbLabel')}: <span className="font-semibold text-primary">{sentence.verbFrench}</span> ({t('verbToLabel')} {sentence.verbEnglish})
+                    {t('verbLabel')}:{' '}
+                    <span className="font-semibold text-primary">
+                      {language === 'al' && sentence.verbAlbanian ? sentence.verbAlbanian : sentence.verbFrench}
+                    </span>{' '}
+                    ({t('verbToLabel')}{' '}
+                    {sentence.verbEnglish})
                   </p>
                 </div>
               )}
               <p className="text-2xl font-semibold text-primary-foreground bg-primary p-3 rounded-md shadow text-center" data-ai-hint="foreign language text">
-                {sentence.french}
+                {targetSentenceText}
               </p>
               {(isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && (
                  <p className="text-lg text-muted-foreground mt-3 text-center pt-2" data-ai-hint="english translation text">
-                  {sentence.english}
+                  {translationText}
                 </p>
               )}
               {studyMode === StudyMode.ActiveRecall && !isAnswerRevealed && (
@@ -238,7 +244,7 @@ const StudyArea: FC<StudyAreaProps> = ({
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t">
         <p className="text-xs text-muted-foreground">
-          {t('audioSourceInfo')}
+          {t('audioSourceInfoTTS')}
         </p>
         <GrammarExplainer language={language} sentence={sentence} disabled={!sentence || isLoading} />
       </CardFooter>

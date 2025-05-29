@@ -18,17 +18,16 @@ import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
-interface RawSentenceData {
+// RawSentenceData interface is simplified as audioSrc fields are removed
+interface RawSentenceDataFromFile {
   id: string;
-  verb: string; 
-  targetSentence: string; 
-  verbEnglish: string; 
-  englishSentence: string; 
+  verb: string;
+  targetSentence: string;
+  verbEnglish: string;
+  englishSentence: string;
   verbAlbanian: string;
   albanianSentence: string;
-  audioSrcEn?: string;
-  audioSrcFr?: string;
-  audioSrcAl?: string;
+  // audioSrcEn, audioSrcFr, audioSrcAl are removed
 }
 
 export default function LinguaLeapPage() {
@@ -38,26 +37,24 @@ export default function LinguaLeapPage() {
 
   const [studyMode, setStudyMode] = useState<StudyMode>(StudyMode.ReadListen);
   const [chunkSize, setChunkSize] = useState<number>(DEFAULT_CHUNK_SIZE);
-  const [selectedChunkNum, setSelectedChunkNum] = useState<number>(0); 
+  const [selectedChunkNum, setSelectedChunkNum] = useState<number>(0);
   const [numChunks, setNumChunks] = useState<number>(0);
 
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [isChunkLoading, setIsChunkLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { toast } = useToast();
 
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [isLooping, setIsLooping] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [currentAudioSrcType, setCurrentAudioSrcType] = useState<'fr' | 'en' | 'al' | null>(null);
+  const [currentAudioSrcType, setCurrentAudioSrcType] = useState<'fr' | 'en' | 'al' | null>(null); // Represents language being spoken
 
   const [isAnswerRevealed, setIsAnswerRevealed] = useState<boolean>(studyMode !== StudyMode.ActiveRecall);
   const [isContinuousPlaying, setIsContinuousPlaying] = useState<boolean>(false);
-  
-  const continuousPlayCurrentIndexRef = useRef<number>(0);
 
+  const continuousPlayCurrentIndexRef = useRef<number>(0);
   const [currentLanguage, setCurrentLanguage] = useState<Language>('en');
 
   const {
@@ -72,6 +69,7 @@ export default function LinguaLeapPage() {
     resetTimerAlert
   } = useTimer(DEFAULT_PRACTICE_TIME_MINUTES);
 
+  // Refs for state values to be used in callbacks
   const currentSentenceIndexRef = useRef(currentSentenceIndex);
   const currentChunkSentencesRef = useRef(currentChunkSentences);
   const playbackSpeedRef = useRef(playbackSpeed);
@@ -81,9 +79,11 @@ export default function LinguaLeapPage() {
   const isLoopingRef = useRef(isLooping);
   const currentLanguageRef = useRef(currentLanguage);
 
-  const enPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const enPlayDelayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleSequenceEndLogicRef = useRef<(() => void) | null>(null);
-  const playRequestCounterRef = useRef<number>(0);
+  const playRequestCounterRef = useRef<number>(0); // To manage overlapping play requests
+
+  const [speechSynthesisVoices, setSpeechSynthesisVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   useEffect(() => { currentSentenceIndexRef.current = currentSentenceIndex; }, [currentSentenceIndex]);
   useEffect(() => { currentChunkSentencesRef.current = currentChunkSentences; }, [currentChunkSentences]);
@@ -93,6 +93,25 @@ export default function LinguaLeapPage() {
   useEffect(() => { isContinuousPlayingRef.current = isContinuousPlaying; }, [isContinuousPlaying]);
   useEffect(() => { isLoopingRef.current = isLooping; }, [isLooping]);
   useEffect(() => { currentLanguageRef.current = currentLanguage; }, [currentLanguage]);
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        setSpeechSynthesisVoices(voices);
+      }
+    };
+    loadVoices(); // Initial attempt
+    if (typeof window !== 'undefined' && window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+      window.speechSynthesis.cancel(); // Cancel any speech on unmount
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -123,10 +142,9 @@ export default function LinguaLeapPage() {
     try {
       const response = await fetch('/data/data.json');
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      const rawData: RawSentenceData[] = await response.json();
-      
+      const rawData: RawSentenceDataFromFile[] = await response.json();
+
       if (!Array.isArray(rawData) || rawData.length === 0) {
-        console.warn("No sentences found or data is not in expected format.");
         setAllSentences([]);
       } else {
         const transformedSentences: Sentence[] = rawData.map(item => ({
@@ -137,9 +155,7 @@ export default function LinguaLeapPage() {
           verbFrench: item.verb,
           verbEnglish: item.verbEnglish,
           verbAlbanian: item.verbAlbanian,
-          audioSrcFr: item.audioSrcFr,
-          audioSrcEn: item.audioSrcEn,
-          audioSrcAl: item.audioSrcAl,
+          // audioSrc fields are removed
         }));
         setAllSentences(transformedSentences);
         showNotification("sentenceDataLoaded");
@@ -148,7 +164,7 @@ export default function LinguaLeapPage() {
       console.error('Error loading sentence data:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage);
-      setAllSentences([]); 
+      setAllSentences([]);
       showNotification("errorLoadingSentenceData", "destructive", { error: errorMessage });
     } finally {
       setIsInitialLoading(false);
@@ -168,85 +184,159 @@ export default function LinguaLeapPage() {
       }
     } else {
       setNumChunks(0);
-      setSelectedChunkNum(0); 
+      setSelectedChunkNum(0);
     }
   }, [allSentences, chunkSize, selectedChunkNum]);
 
-
   const stopAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-       if (!audioRef.current.paused) { 
-         audioRef.current.currentTime = 0; 
-       }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      playRequestCounterRef.current++; // Invalidate previous play requests
+      window.speechSynthesis.cancel();
     }
-    if (enPlayTimeoutRef.current) {
-      clearTimeout(enPlayTimeoutRef.current);
-      enPlayTimeoutRef.current = null;
+    if (enPlayDelayTimeoutRef.current) {
+      clearTimeout(enPlayDelayTimeoutRef.current);
+      enPlayDelayTimeoutRef.current = null;
     }
     setIsAudioPlaying(false);
     setCurrentAudioSrcType(null);
   }, []);
-  
 
   const stopContinuousPlay = useCallback(() => {
     setIsContinuousPlaying(false);
-    isContinuousPlayingRef.current = false; 
+    isContinuousPlayingRef.current = false;
     stopAudio();
     continuousPlayCurrentIndexRef.current = 0;
     showNotification("continuousPlayStopped");
   }, [stopAudio, showNotification]);
 
-
   const applyChunkSettings = useCallback(() => {
-    if (isInitialLoading) return; 
-    
+    if (isInitialLoading) return;
+
     if (allSentences.length === 0 && !isInitialLoading) {
       setCurrentChunkSentences([]);
       setCurrentSentenceIndex(0);
       setIsChunkLoading(false);
       return;
     }
-
     setIsChunkLoading(true);
+    if (isContinuousPlayingRef.current) stopContinuousPlay();
+    else stopAudio();
 
-    if (isContinuousPlayingRef.current) {
-      stopContinuousPlay();
-    } else {
-      stopAudio();
-    }
-    
     setTimeout(() => {
       const startIndex = selectedChunkNum * chunkSize;
       const endIndex = Math.min(startIndex + chunkSize, allSentences.length);
       const newChunk = allSentences.slice(startIndex, endIndex);
-      
       setCurrentChunkSentences(newChunk);
       setCurrentSentenceIndex(0);
-      
-      if (studyMode === StudyMode.ActiveRecall) {
-        setIsAnswerRevealed(false);
-      } else {
-        setIsAnswerRevealed(true);
-      }
-      
+      if (studyMode === StudyMode.ActiveRecall) setIsAnswerRevealed(false);
+      else setIsAnswerRevealed(true);
       setIsChunkLoading(false);
-      if (newChunk.length > 0) {
-        showNotification("chunkLoaded", "default", { chunkNum: selectedChunkNum + 1 });
-      } else if (allSentences.length > 0) { 
-        showNotification("chunkEmpty", "default", { chunkNum: selectedChunkNum + 1 });
-      }
+      if (newChunk.length > 0) showNotification("chunkLoaded", "default", { chunkNum: selectedChunkNum + 1 });
+      else if (allSentences.length > 0) showNotification("chunkEmpty", "default", { chunkNum: selectedChunkNum + 1 });
     }, 200);
-
   }, [allSentences, selectedChunkNum, chunkSize, studyMode, stopAudio, stopContinuousPlay, showNotification, isInitialLoading]);
-  
-  useEffect(() => { 
-    if (!isInitialLoading) { 
-        applyChunkSettings(); 
-    }
+
+  useEffect(() => {
+    if (!isInitialLoading) applyChunkSettings();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChunkNum, chunkSize, isInitialLoading, allSentences.length]); 
-  
+  }, [selectedChunkNum, chunkSize, isInitialLoading, allSentences.length]);
+
+  const getVoiceForLang = useCallback((targetLang: 'fr' | 'en' | 'al'): SpeechSynthesisVoice | undefined => {
+    if (speechSynthesisVoices.length === 0) {
+      console.warn("TTS voices not loaded yet for getVoiceForLang.");
+      // Attempt to populate voices again if empty, though ideally they are loaded by useEffect
+      const currentVoices = window.speechSynthesis.getVoices();
+      if (currentVoices.length > 0) {
+        setSpeechSynthesisVoices(currentVoices);
+      } else {
+        return undefined; // No voices available yet
+      }
+    }
+
+    let langCodePrefix = '';
+    let fullLangCode = ''; // For exact match
+    let langVariations: string[] = []; // For broader matching
+
+    if (targetLang === 'fr') { langCodePrefix = 'fr'; fullLangCode = 'fr-FR'; langVariations = ['fr-CA', 'fr-BE', 'fr-CH']; }
+    else if (targetLang === 'en') { langCodePrefix = 'en'; fullLangCode = 'en-US'; langVariations = ['en-GB', 'en-AU', 'en-CA']; }
+    else if (targetLang === 'al') { langCodePrefix = 'sq'; fullLangCode = 'sq-AL'; langVariations = [];} // Albanian might have fewer variations
+
+    // 1. Try exact full language code
+    let voice = speechSynthesisVoices.find(v => v.lang === fullLangCode);
+    if (voice) return voice;
+
+    // 2. Try common variations
+    for (const variation of langVariations) {
+      voice = speechSynthesisVoices.find(v => v.lang === variation);
+      if (voice) return voice;
+    }
+    
+    // 3. Try prefix match (e.g., 'fr' for 'fr-FR', 'fr-CA')
+    voice = speechSynthesisVoices.find(v => v.lang.startsWith(langCodePrefix + '-'));
+    if (voice) return voice;
+
+    // 4. Try just the language code itself (e.g. 'fr')
+    voice = speechSynthesisVoices.find(v => v.lang === langCodePrefix);
+    if (voice) return voice;
+    
+    console.warn(`No specific voice found for language: ${targetLang} (${fullLangCode}). Utterance will use browser default if available.`);
+    return undefined; // Let browser pick, but set utterance.lang
+  }, [speechSynthesisVoices]);
+
+
+  const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: number, onEndCallback: () => void) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis || playRequestCounterRef.current !== playId) {
+      if (playRequestCounterRef.current !== playId) console.log("TTS request invalidated");
+      else console.log("Speech synthesis not available or request invalidated.");
+      onEndCallback(); // Ensure sequence continues or ends
+      return;
+    }
+
+    if (speechSynthesisVoices.length === 0) {
+        showNotification("ttsVoicesNotReady", "destructive");
+        onEndCallback();
+        return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voice = getVoiceForLang(lang);
+
+    if (voice) {
+      utterance.voice = voice;
+    }
+    // Set lang attribute regardless of finding a specific voice, helps browser pick default
+    utterance.lang = lang === 'fr' ? 'fr-FR' : lang === 'en' ? 'en-US' : 'sq-AL';
+    utterance.rate = playbackSpeedRef.current;
+
+    utterance.onstart = () => {
+      if (playRequestCounterRef.current === playId) {
+        setIsAudioPlaying(true);
+        setCurrentAudioSrcType(lang);
+      }
+    };
+
+    utterance.onend = () => {
+      if (playRequestCounterRef.current === playId) {
+        // setIsAudioPlaying(false); // Handled by onEndCallback or next part of sequence
+        // setCurrentAudioSrcType(null);
+        onEndCallback();
+      }
+    };
+
+    utterance.onerror = (event) => {
+      console.error('SpeechSynthesisUtterance.onerror', event);
+      showNotification("errorPlayingAudio", "destructive", { source: `TTS for ${lang}` });
+      if (playRequestCounterRef.current === playId) {
+        setIsAudioPlaying(false);
+        setCurrentAudioSrcType(null);
+        onEndCallback(); // Ensure sequence continues or ends
+      }
+    };
+    
+    window.speechSynthesis.speak(utterance);
+
+  }, [getVoiceForLang, showNotification, speechSynthesisVoices]);
+
 
   const playAudioSequence = useCallback(async (
     sentenceToPlay?: Sentence,
@@ -254,242 +344,116 @@ export default function LinguaLeapPage() {
   ) => {
     const currentPlayId = ++playRequestCounterRef.current;
 
-    if (isPartOfContinuousSequence && !isContinuousPlayingRef.current) {
-      return;
-    }
+    if (isPartOfContinuousSequence && !isContinuousPlayingRef.current) return;
+
+    stopAudio(); // Stops current speech and clears timeouts
+
+    // Short delay to ensure speech cancelled before starting new.
+    await new Promise(resolve => setTimeout(resolve, 50)); 
+    if (playRequestCounterRef.current !== currentPlayId) return; // Check if invalidated during delay
+
 
     const sentence = sentenceToPlay || currentChunkSentencesRef.current[currentSentenceIndexRef.current];
-    const audioElement = audioRef.current;
-
-    if (!audioElement) {
-      console.error(`Audio element not ready.`);
-      return;
-    }
-
     if (!sentence) {
       if (isPartOfContinuousSequence && isContinuousPlayingRef.current) {
         setTimeout(() => handleSequenceEndLogicRef.current?.(), 50);
       }
       return;
     }
-    
-    stopAudio(); 
-    await new Promise(resolve => setTimeout(resolve, 50));
 
+    let primaryText: string;
+    let primaryLang: 'fr' | 'al';
+    let secondaryText: string | null = sentence.english; // English is always secondary for now
+    let secondaryLang: 'en' = 'en';
 
-    const playPart = async (src: string, type: 'fr' | 'en' | 'al'): Promise<boolean> => {
-      if (playRequestCounterRef.current !== currentPlayId) {
-        return false; 
-      }
+    if (currentLanguageRef.current === 'al') {
+      primaryText = sentence.albanianSentence;
+      primaryLang = 'al';
+    } else { // Default to French if UI is English or other
+      primaryText = sentence.french;
+      primaryLang = 'fr';
+    }
 
-      try {
-        audioElement.src = src;
-        audioElement.load(); 
-        audioElement.playbackRate = playbackSpeedRef.current;
-        
-        await audioElement.play();
-        
-        if (playRequestCounterRef.current === currentPlayId) {
-          setIsAudioPlaying(true);
-          setCurrentAudioSrcType(type);
-          return true;
+    const playPrimary = () => {
+      playTTS(primaryText, primaryLang, currentPlayId, () => {
+        if (playRequestCounterRef.current !== currentPlayId) return;
+        if (secondaryText) {
+          // Play secondary after a delay
+          enPlayDelayTimeoutRef.current = setTimeout(() => {
+            if (playRequestCounterRef.current !== currentPlayId) return;
+            playTTS(secondaryText!, secondaryLang, currentPlayId, () => {
+              if (playRequestCounterRef.current !== currentPlayId) return;
+              setIsAudioPlaying(false);
+              setCurrentAudioSrcType(null);
+              handleSequenceEndLogicRef.current?.();
+            });
+          }, 500);
+        } else {
+          setIsAudioPlaying(false);
+          setCurrentAudioSrcType(null);
+          handleSequenceEndLogicRef.current?.();
         }
-      } catch (err) {
-        console.error(`Error playing ${type} audio:`, err);
-        const attemptedSrc = audioElement.currentSrc || src;
-        showNotification("errorPlayingAudio", "destructive", { source: attemptedSrc});
-        if (playRequestCounterRef.current === currentPlayId) {
-            setIsAudioPlaying(false);
-            setCurrentAudioSrcType(null);
-        }
-      }
-      return false;
+      });
     };
 
-    let primarySrc: string | undefined;
-    let primaryType: 'fr' | 'en' | 'al' | null = null;
+    playPrimary();
 
-    const langUI = currentLanguageRef.current;
-
-    if (langUI === 'al') {
-      if (sentence.audioSrcAl) {
-        primarySrc = sentence.audioSrcAl;
-        primaryType = 'al';
-      } else if (sentence.audioSrcFr) {
-        primarySrc = sentence.audioSrcFr;
-        primaryType = 'fr';
-      } else if (sentence.audioSrcEn) {
-        primarySrc = sentence.audioSrcEn;
-        primaryType = 'en';
-      }
-    } else { // langUI === 'en'
-      if (sentence.audioSrcFr) {
-        primarySrc = sentence.audioSrcFr;
-        primaryType = 'fr';
-      } else if (sentence.audioSrcEn) {
-        primarySrc = sentence.audioSrcEn;
-        primaryType = 'en';
-      }
-    }
-
-    if (primarySrc && primaryType) {
-      const success = await playPart(primarySrc, primaryType);
-      if (!success && playRequestCounterRef.current === currentPlayId) { 
-        handleSequenceEndLogicRef.current?.();
-      }
-      // The 'ended' event will handle playing the secondary audio if applicable.
-    } else {
-      // No audio source found for the sentence based on current logic
-      if (isPartOfContinuousSequence && isContinuousPlayingRef.current) {
-        setTimeout(() => handleSequenceEndLogicRef.current?.(), 50);
-      }
-      return;
-    }
-  }, [stopAudio, showNotification]);
+  }, [stopAudio, playTTS]);
 
 
   useEffect(() => {
-    if (!audioRef.current) audioRef.current = new Audio();
-    const audio = audioRef.current;
-
+    // This effect now mostly manages the overall sequence logic (looping, continuous play)
+    // Individual utterance 'onend' handles transitions between primary/secondary speech
     const handleSequenceEndLogicInternal = () => {
-      const currentGlobalPlayId = playRequestCounterRef.current;
-      
+      const currentGlobalPlayId = playRequestCounterRef.current; // Capture playId at time of decision
+
       if (isLoopingRef.current && !isContinuousPlayingRef.current) {
         setTimeout(() => {
-          if (playRequestCounterRef.current === currentGlobalPlayId) {
+          // Check if still the latest request before re-playing
+          if (playRequestCounterRef.current === currentGlobalPlayId && isLoopingRef.current) { 
             playAudioSequence();
           }
         }, 200);
-      }
-      else if (isContinuousPlayingRef.current) {
+      } else if (isContinuousPlayingRef.current) {
         const nextIndex = continuousPlayCurrentIndexRef.current + 1;
-        
         if (nextIndex < currentChunkSentencesRef.current.length) {
-          setCurrentSentenceIndex(nextIndex); 
+          setCurrentSentenceIndex(nextIndex);
           continuousPlayCurrentIndexRef.current = nextIndex;
-          
           setTimeout(() => {
             if (playRequestCounterRef.current === currentGlobalPlayId && isContinuousPlayingRef.current) {
-              playAudioSequence(
-                currentChunkSentencesRef.current[nextIndex],
-                true
-              );
+              playAudioSequence(currentChunkSentencesRef.current[nextIndex], true);
             }
           }, 200);
         } else {
           stopContinuousPlay();
         }
+      } else {
+        // If not looping and not continuous, ensure audio state is fully reset
+         if (playRequestCounterRef.current === currentGlobalPlayId) { // only if this sequence is still valid
+            setIsAudioPlaying(false);
+            setCurrentAudioSrcType(null);
+        }
       }
     };
-    
+
     handleSequenceEndLogicRef.current = handleSequenceEndLogicInternal;
 
-    const handleAudioEnded = () => {
-      const endedPlayId = playRequestCounterRef.current;
-      const primaryAudioPlayedType = currentAudioSrcTypeRef.current; // Type of audio that just finished
-      const sentence = currentChunkSentencesRef.current[currentSentenceIndexRef.current];
-
-      if (!sentence) {
-        if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
-        return;
-      }
-
-      let secondaryAudioSrc: string | undefined;
-      const secondaryAudioType: 'en' | null = 'en'; // Secondary audio is typically English
-
-      // Determine if secondary (English) audio should play
-      if ((primaryAudioPlayedType === 'fr' || primaryAudioPlayedType === 'al') && sentence.audioSrcEn) {
-        secondaryAudioSrc = sentence.audioSrcEn;
-      }
-
-      if (secondaryAudioSrc) {
-        enPlayTimeoutRef.current = setTimeout(async () => {
-          if (
-            playRequestCounterRef.current !== endedPlayId ||
-            (currentAudioSrcTypeRef.current !== primaryAudioPlayedType && currentAudioSrcTypeRef.current !== null)
-          ) {
-            if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
-            return;
-          }
-          try {
-            audio.src = secondaryAudioSrc;
-            audio.load();
-            audio.playbackRate = playbackSpeedRef.current;
-            await audio.play();
-            
-            if (playRequestCounterRef.current === endedPlayId) {
-              setIsAudioPlaying(true);
-              setCurrentAudioSrcType(secondaryAudioType); // Now playing 'en'
-            }
-          } catch (err) {
-            console.error(`Secondary English playback failed:`, err);
-            if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
-          }
-        }, 500);
-      } else {
-        // No secondary audio to play (e.g., primary was English or no English audio src)
-        setIsAudioPlaying(false);
-        setCurrentAudioSrcType(null);
-        if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
-      }
-    };
-
-    audio.addEventListener('ended', handleAudioEnded);
-    
-    const audioErrorHandler = (e: Event) => {
-      const mediaError = audio.error; 
-      const attemptedSrc = audio.currentSrc || (e.target as HTMLAudioElement)?.src || 'Source unknown';
-      let detailedMessage = 'Unknown audio error occurred.';
-      let errorCode: number | string = 'N/A';
-
-      if (mediaError) {
-        errorCode = mediaError.code;
-        switch (mediaError.code) {
-          case 1: 
-            detailedMessage = 'Audio playback was aborted.';
-            break;
-          case 2: 
-            detailedMessage = 'A network error occurred while fetching the audio.';
-            break;
-          case 3: 
-            detailedMessage = 'The audio could not be decoded.';
-            break;
-          case 4: 
-            detailedMessage = `The audio format is not supported, or the audio file was not found at '${attemptedSrc}'. Please ensure audio files are in the 'public' folder and paths are correct.`;
-            break;
-          default:
-            detailedMessage = mediaError.message || 'An unspecified audio error occurred.';
-        }
-        console.error(`Audio Error Details - Code: ${errorCode}, Message: "${detailedMessage}", Attempted Source: ${attemptedSrc}`, mediaError, e);
-      } else {
-        console.error(`Audio Error - An unknown error occurred. Attempted Source: ${attemptedSrc}`, e);
-      }
-      
-      showNotification("audioError", "destructive", {message: detailedMessage, code: errorCode});
-      stopAudio(); 
-      if(handleSequenceEndLogicRef.current) {
-        handleSequenceEndLogicRef.current();
-      }
-    };
-    audio.addEventListener('error', audioErrorHandler);
-
-
+    // Cleanup: cancel any ongoing speech when component unmounts or dependencies change significantly
     return () => {
-      audio.removeEventListener('ended', handleAudioEnded);
-      audio.removeEventListener('error', audioErrorHandler);
-      if (enPlayTimeoutRef.current) clearTimeout(enPlayTimeoutRef.current);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = ""; 
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      if (enPlayDelayTimeoutRef.current) {
+        clearTimeout(enPlayDelayTimeoutRef.current);
       }
     };
-  }, [playAudioSequence, stopAudio, stopContinuousPlay, showNotification]);
+  }, [playAudioSequence, stopContinuousPlay]); // Dependencies carefully chosen
 
 
   const togglePlayPause = useCallback(() => {
-    if (isAudioPlayingRef.current) stopAudio();
-    else {
+    if (isAudioPlayingRef.current) {
+      stopAudio();
+    } else {
       if (currentChunkSentencesRef.current.length > 0) {
         playAudioSequence();
       } else {
@@ -505,10 +469,7 @@ export default function LinguaLeapPage() {
       const newIndex = currentSentenceIndexRef.current - 1;
       setCurrentSentenceIndex(newIndex);
       if (isContinuousPlayingRef.current) continuousPlayCurrentIndexRef.current = newIndex;
-      
-      if (studyMode === StudyMode.ActiveRecall && !isContinuousPlayingRef.current) {
-        setIsAnswerRevealed(false);
-      }
+      if (studyMode === StudyMode.ActiveRecall && !isContinuousPlayingRef.current) setIsAnswerRevealed(false);
     }
   };
 
@@ -518,10 +479,7 @@ export default function LinguaLeapPage() {
       const newIndex = currentSentenceIndexRef.current + 1;
       setCurrentSentenceIndex(newIndex);
       if (isContinuousPlayingRef.current) continuousPlayCurrentIndexRef.current = newIndex;
-      
-      if (studyMode === StudyMode.ActiveRecall && !isContinuousPlayingRef.current) {
-        setIsAnswerRevealed(false);
-      }
+      if (studyMode === StudyMode.ActiveRecall && !isContinuousPlayingRef.current) setIsAnswerRevealed(false);
     }
   };
 
@@ -531,9 +489,7 @@ export default function LinguaLeapPage() {
     } else if (studyMode !== StudyMode.ActiveRecall) {
       setIsAnswerRevealed(true);
     }
-    if (isContinuousPlayingRef.current) {
-        setIsAnswerRevealed(true);
-    }
+    if (isContinuousPlayingRef.current) setIsAnswerRevealed(true);
   }, [currentSentenceIndex, studyMode]);
 
 
@@ -549,12 +505,10 @@ export default function LinguaLeapPage() {
     if (currentChunkSentencesRef.current.length > 0) {
       stopAudio();
       setIsContinuousPlaying(true);
-      isContinuousPlayingRef.current = true; 
+      isContinuousPlayingRef.current = true;
       continuousPlayCurrentIndexRef.current = 0;
       setCurrentSentenceIndex(0);
-      
-      setIsAnswerRevealed(true); 
-      
+      setIsAnswerRevealed(true);
       setTimeout(() => playAudioSequence(currentChunkSentencesRef.current[0], true), 100);
       showNotification("startingContinuousPlay");
     } else {
@@ -564,11 +518,11 @@ export default function LinguaLeapPage() {
 
   const currentSentenceData = currentChunkSentences[currentSentenceIndex] || null;
 
-  if (isInitialLoading && allSentences.length === 0) { 
+  if (isInitialLoading && allSentences.length === 0) {
     return <div className="flex justify-center items-center min-h-screen"><LoadingSpinner size={64} /></div>;
   }
 
-  if (error && allSentences.length === 0) { 
+  if (error && allSentences.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-destructive p-8 text-center">
         <AlertCircle className="h-16 w-16 mb-4" />
@@ -580,20 +534,23 @@ export default function LinguaLeapPage() {
       </div>
     );
   }
-  
+
   const mainContentLayout = "mt-8 space-y-10 md:space-y-12";
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 font-sans bg-gradient-to-br from-blue-100 via-white to-purple-100">
       <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50">
-        <Header language={currentLanguage} onLanguageChange={setCurrentLanguage} />
-        
+        <Header language={currentLanguage} onLanguageChange={(lang) => {
+          stopAudio(); // Stop audio when language changes
+          setCurrentLanguage(lang);
+        }} />
+
         <div className={mainContentLayout}>
           <ControlsSection
             language={currentLanguage}
             studyMode={studyMode}
-            onStudyModeChange={(newMode) => { 
-              setStudyMode(newMode); 
+            onStudyModeChange={(newMode) => {
+              setStudyMode(newMode);
               stopAudio();
             }}
             chunkSize={chunkSize}
@@ -603,7 +560,7 @@ export default function LinguaLeapPage() {
             numChunks={numChunks}
             onLoadChunk={applyChunkSettings}
             allSentencesCount={allSentences.length}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)} 
+            isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)}
           />
           <StudyArea
             language={currentLanguage}
@@ -621,7 +578,8 @@ export default function LinguaLeapPage() {
               playbackSpeed: playbackSpeed,
               onPlaybackSpeedChange: (speed) => {
                 setPlaybackSpeed(speed);
-                if (audioRef.current) audioRef.current.playbackRate = speed;
+                // If audio is playing, stopping and restarting might be needed for speed change to take effect immediately with TTS.
+                // For simplicity, current TTS implementation might only apply new speed to next utterance.
               },
               disablePrev: currentSentenceIndex === 0,
               disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,
@@ -631,7 +589,7 @@ export default function LinguaLeapPage() {
               totalInChunk: currentChunkSentences.length,
               totalAll: allSentences.length,
             }}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
+            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
             allSentencesCount={allSentences.length}
           />
           <ContinuousListeningSection
@@ -660,4 +618,3 @@ export default function LinguaLeapPage() {
     </div>
   );
 }
-
