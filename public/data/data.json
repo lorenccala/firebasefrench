@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "french": "Bonjour le monde.",
+    "english": "Hello world.",
+    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=Bonjour%20le%20monde.&tl=fr&client=tw-ob",
+    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=Hello%20world.&tl=en&client=tw-ob"
+  },
+  {
+    "id": 2,
+    "french": "Comment ça va ?",
+    "english": "How are you?",
+    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=Comment%20%C3%A7a%20va%20?&tl=fr&client=tw-ob",
+    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=How%20are%20you?&tl=en&client=tw-ob"
+  },
+  {
+    "id": 3,
+    "french": "Je m'appelle Claude.",
+    "english": "My name is Claude.",
+    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=Je%20m'appelle%20Claude.&tl=fr&client=tw-ob",
+    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=My%20name%20is%20Claude.&tl=en&client=tw-ob"
+  },
+  {
+    "id": 4,
+    "french": "Quel temps fait-il aujourd'hui ?",
+    "english": "What's the weather like today?",
+    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=Quel%20temps%20fait-il%20aujourd'hui%20?&tl=fr&client=tw-ob",
+    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=What's%20the%20weather%20like%20today?&tl=en&client=tw-ob"
+  },
+  {
+    "id": 5,
+    "french": "J'aime apprendre de nouvelles langues.",
+    "english": "I like to learn new languages.",
+    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=J'aime%20apprendre%20de%20nouvelles%20langues.&tl=fr&client=tw-ob",
+    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=I%20like%20to%20learn%20new%20languages.&tl=en&client=tw-ob"
+  }
+]
