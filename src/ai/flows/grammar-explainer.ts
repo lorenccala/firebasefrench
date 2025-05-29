@@ -28,7 +28,7 @@ export async function explainGrammar(input: ExplainGrammarInput): Promise<Explai
 
 const prompt = ai.definePrompt({
   name: 'explainGrammarPrompt',
-  model: 'googleai/gemma-7b', // Changed from gemma-7b-it
+  model: 'googleai/gemini-1.5-flash-latest', // Changed from gemma-7b
   input: {schema: ExplainGrammarInputSchema},
   output: {schema: ExplainGrammarOutputSchema},
   prompt: `You are a helpful AI assistant specialized in explaining grammatical concepts.
