@@ -94,4 +94,6 @@ export const translations = {
   sentenceBuilderIncorrect: { en: "Not quite. The correct sentence is: \"<strong>{correctSentence}</strong>\". Try again!", al: "Jo saktë. Fjala e saktë është: \"<strong>{correctSentence}</strong>\". Provo përsëri!" },
   checkButton: { en: "Check", al: "Kontrollo" },
   resetButton: { en: "Reset", al: "Rivendos" },
+  prevSentenceButton: { en: "Prev Sentence", al: "Fjalia Para" },
+  nextSentenceButton: { en: "Next Sentence", al: "Fjalia Tjetër" },
 };

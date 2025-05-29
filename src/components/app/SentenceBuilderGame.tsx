@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import React, { useState, useEffect, useMemo } from 'react';
-import { Dices, Check, RotateCcw, Info } from 'lucide-react';
+import { Dices, Check, RotateCcw, Info, SkipForward, SkipBack } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -21,6 +21,10 @@ interface SentenceBuilderGameProps {
   language: Language;
   sentence: Sentence | null;
   isLoading: boolean;
+  onNextSentence: () => void;
+  onPrevSentence: () => void;
+  currentSentenceIndex: number;
+  totalSentencesInChunk: number;
 }
 
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -36,6 +40,10 @@ const SentenceBuilderGame: FC<SentenceBuilderGameProps> = ({
   language,
   sentence,
   isLoading,
+  onNextSentence,
+  onPrevSentence,
+  currentSentenceIndex,
+  totalSentencesInChunk,
 }) => {
   const [originalWords, setOriginalWords] = useState<WordToken[]>([]);
   const [availableWords, setAvailableWords] = useState<WordToken[]>([]);
@@ -203,17 +211,27 @@ const SentenceBuilderGame: FC<SentenceBuilderGameProps> = ({
           </Alert>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row justify-end items-center gap-3 pt-6 border-t">
-        <Button onClick={handleResetChallenge} variant="outline" disabled={originalWords.length === 0}>
-          <RotateCcw className="mr-2 h-4 w-4" /> {t('resetButton')}
-        </Button>
-        <Button 
-            onClick={handleCheckSentence} 
-            className="bg-primary hover:bg-primary/90"
-            disabled={constructedWords.length === 0 || originalWords.length === 0 || isCorrect === true}
-        >
-          <Check className="mr-2 h-4 w-4" /> {t('checkButton')}
-        </Button>
+      <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-6 border-t">
+        <div className="flex gap-2">
+            <Button onClick={onPrevSentence} variant="outline" disabled={currentSentenceIndex === 0 || totalSentencesInChunk === 0}>
+                <SkipBack className="mr-2 h-4 w-4" /> {t('prevSentenceButton')}
+            </Button>
+            <Button onClick={onNextSentence} variant="outline" disabled={currentSentenceIndex >= totalSentencesInChunk - 1 || totalSentencesInChunk === 0}>
+                {t('nextSentenceButton')} <SkipForward className="ml-2 h-4 w-4" />
+            </Button>
+        </div>
+        <div className="flex gap-2">
+            <Button onClick={handleResetChallenge} variant="outline" disabled={originalWords.length === 0}>
+            <RotateCcw className="mr-2 h-4 w-4" /> {t('resetButton')}
+            </Button>
+            <Button 
+                onClick={handleCheckSentence} 
+                className="bg-primary hover:bg-primary/90"
+                disabled={constructedWords.length === 0 || originalWords.length === 0 || isCorrect === true}
+            >
+            <Check className="mr-2 h-4 w-4" /> {t('checkButton')}
+            </Button>
+        </div>
       </CardFooter>
     </Card>
   );

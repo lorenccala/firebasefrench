@@ -415,7 +415,7 @@ export default function LinguaLeapPage() {
     console.log(`PlayAudioSequence (ID ${currentPlayId}): Starting for sentence ID ${sentence.id}`);
 
     let primaryAudioSrc: string | undefined;
-    let primaryLang: 'fr' | 'al';
+    let primaryLang: 'fr';
     let secondaryAudioSrc: string | undefined;
     let secondaryLang: 'en' | 'al' | null = null;
 
@@ -709,6 +709,10 @@ export default function LinguaLeapPage() {
             language={currentLanguage}
             sentence={currentSentenceData}
             isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+            onNextSentence={handleNextSentence}
+            onPrevSentence={handlePrevSentence}
+            currentSentenceIndex={currentSentenceIndex}
+            totalSentencesInChunk={currentChunkSentences.length}
           />
           <NativeContentSwitchSection
             language={currentLanguage}
