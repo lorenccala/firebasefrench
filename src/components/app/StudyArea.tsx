@@ -21,6 +21,7 @@ import { type Sentence, StudyMode } from '@/types';
 import { PLAYBACK_SPEEDS } from '@/lib/constants';
 import { LoadingSpinner } from './LoadingSpinner';
 import GrammarExplainer from './GrammarExplainer';
+import { translations, type Language } from '@/lib/translations';
 
 interface AudioControls {
   isPlaying: boolean;
@@ -42,6 +43,7 @@ interface SentenceCounter {
 }
 
 interface StudyAreaProps {
+  language: Language;
   sentence: Sentence | null;
   studyMode: StudyMode;
   isAnswerRevealed: boolean;
@@ -53,6 +55,7 @@ interface StudyAreaProps {
 }
 
 const StudyArea: FC<StudyAreaProps> = ({
+  language,
   sentence,
   studyMode,
   isAnswerRevealed,
@@ -63,18 +66,34 @@ const StudyArea: FC<StudyAreaProps> = ({
   allSentencesCount
 }) => {
 
+   const t = (key: keyof typeof translations, params?: Record<string, string | number | React.ReactNode>) => {
+    let text = translations[key] ? translations[key][language] : String(key);
+    if (params) {
+      Object.entries(params).forEach(([paramKey, value]) => {
+        // This is a naive replace, might need more robust solution for ReactNode
+        text = text.replace(`{${paramKey}}`, String(value));
+      });
+    }
+    // For strings that might contain HTML (like the description)
+    if (key === 'studyZoneDescription' && params?.mode) {
+        return <span dangerouslySetInnerHTML={{ __html: text }} />;
+    }
+    return text;
+  };
+
+
   if (isLoading) {
     return (
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl">
             <Edit3 className="mr-3 h-6 w-6 text-primary" />
-            Study Zone
+            {t('studyZoneTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent className="h-64 flex flex-col items-center justify-center">
           <LoadingSpinner />
-          <p className="mt-4 text-muted-foreground">Loading sentences...</p>
+          <p className="mt-4 text-muted-foreground">{t('loadingChunkData')}</p>
         </CardContent>
       </Card>
     );
@@ -86,14 +105,14 @@ const StudyArea: FC<StudyAreaProps> = ({
             <CardHeader>
                 <CardTitle className="flex items-center text-2xl">
                     <Info className="mr-3 h-6 w-6 text-primary" />
-                    No Sentences Loaded
+                    {t('noSentencesLoadedTitle')}
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <Alert>
-                    <AlertTitle>Data Missing</AlertTitle>
+                    <AlertTitle>{t('noSentencesLoadedTitle')}</AlertTitle>
                     <AlertDescription>
-                        No sentences are available. Please check if the data source is configured correctly or try reloading the application.
+                        {t('noSentencesLoadedDescription')}
                     </AlertDescription>
                 </Alert>
             </CardContent>
@@ -107,15 +126,15 @@ const StudyArea: FC<StudyAreaProps> = ({
             <CardHeader>
                 <CardTitle className="flex items-center text-2xl">
                     <Info className="mr-3 h-6 w-6 text-primary" />
-                    Chunk Empty or Not Loaded
+                     {t('chunkEmptyTitle')}
                 </CardTitle>
             </CardHeader>
             <CardContent>
                  <Alert variant="default" className="bg-secondary/30">
                     <Info className="h-4 w-4" />
-                    <AlertTitle>No Sentences in Current Chunk</AlertTitle>
+                    <AlertTitle>{t('noSentenceSelectedTitle')}</AlertTitle>
                     <AlertDescription>
-                        This chunk is empty, or you haven't loaded a chunk yet. Please select and load a chunk using the controls above.
+                        {t('chunkEmptyDescription')}
                     </AlertDescription>
                 </Alert>
             </CardContent>
@@ -130,10 +149,10 @@ const StudyArea: FC<StudyAreaProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center text-2xl">
           <Edit3 className="mr-3 h-6 w-6 text-primary" />
-          Study Zone
+          {t('studyZoneTitle')}
         </CardTitle>
         <CardDescription>
-          Engage with the sentences. Current mode: <strong>{studyMode}</strong>
+          {t('studyZoneDescription', { mode: studyMode })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -143,7 +162,7 @@ const StudyArea: FC<StudyAreaProps> = ({
               { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && sentence.verbFrench && sentence.verbEnglish && (
                 <div className="mb-3 text-center">
                   <p className="text-sm text-muted-foreground" data-ai-hint="verb conjugation">
-                    Verb: <span className="font-semibold text-primary">{sentence.verbFrench}</span> (to {sentence.verbEnglish})
+                    {t('verbLabel')}: <span className="font-semibold text-primary">{sentence.verbFrench}</span> ({t('verbToLabel')} {sentence.verbEnglish})
                   </p>
                 </div>
               )}
@@ -157,7 +176,7 @@ const StudyArea: FC<StudyAreaProps> = ({
               )}
               {studyMode === StudyMode.ActiveRecall && !isAnswerRevealed && (
                 <Button onClick={onRevealAnswer} className="mt-4 mx-auto bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                  <Eye className="mr-2 h-4 w-4" /> Reveal Answer
+                  <Eye className="mr-2 h-4 w-4" /> {t('revealAnswerButton')}
                 </Button>
               )}
             </div>
@@ -180,7 +199,7 @@ const StudyArea: FC<StudyAreaProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Label htmlFor="playback-speed" className="text-sm whitespace-nowrap">Speed:</Label>
+                  <Label htmlFor="playback-speed" className="text-sm whitespace-nowrap">{t('playbackSpeedLabel')}</Label>
                   <Select
                     value={String(audioControls.playbackSpeed)}
                     onValueChange={(value) => audioControls.onPlaybackSpeedChange(Number(value))}
@@ -201,7 +220,7 @@ const StudyArea: FC<StudyAreaProps> = ({
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  Sentence {sentenceCounter.currentNum} of {sentenceCounter.totalInChunk} in chunk
+                  {t('sentenceCounterInChunk', {current: sentenceCounter.currentNum, total: sentenceCounter.totalInChunk})}
                 </p>
                 <Progress value={progressPercentage} className="w-full h-2 mt-1" />
               </div>
@@ -210,18 +229,18 @@ const StudyArea: FC<StudyAreaProps> = ({
         ) : (
             <Alert variant="default" className="bg-secondary/30">
                 <Info className="h-4 w-4" />
-                <AlertTitle>No Sentence Selected</AlertTitle>
+                <AlertTitle>{t('noSentenceSelectedTitle')}</AlertTitle>
                 <AlertDescription>
-                Load a chunk to begin your study session or the current chunk might be empty.
+                {t('noSentenceSelectedDescription')}
                 </AlertDescription>
             </Alert>
         )}
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t">
         <p className="text-xs text-muted-foreground">
-          Audio playback uses Google Translate TTS.
+          {t('audioSourceInfo')}
         </p>
-        <GrammarExplainer sentence={sentence} disabled={!sentence || isLoading} />
+        <GrammarExplainer language={language} sentence={sentence} disabled={!sentence || isLoading} />
       </CardFooter>
     </Card>
   );

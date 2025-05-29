@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -15,8 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { translations, type Language } from '@/lib/translations';
 
 interface NativeContentSwitchSectionProps {
+  language: Language;
   practiceTimeMinutes: number;
   onPracticeTimeChange: (minutes: number) => void;
   onStartTimer: () => void;
@@ -27,6 +30,7 @@ interface NativeContentSwitchSectionProps {
 }
 
 const NativeContentSwitchSection: FC<NativeContentSwitchSectionProps> = ({
+  language,
   practiceTimeMinutes,
   onPracticeTimeChange,
   onStartTimer,
@@ -35,21 +39,31 @@ const NativeContentSwitchSection: FC<NativeContentSwitchSectionProps> = ({
   showSwitchToNativeAlert,
   onHideAlert,
 }) => {
+  const t = (key: keyof typeof translations, params?: Record<string, string | number>) => {
+    let text = translations[key] ? translations[key][language] : String(key);
+    if (params) {
+      Object.entries(params).forEach(([paramKey, value]) => {
+        text = text.replace(`{${paramKey}}`, String(value));
+      });
+    }
+    return text;
+  };
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center text-2xl">
           <Timer className="mr-3 h-6 w-6 text-primary" />
-          Focus Timer
+          {t('focusTimerTitle')}
         </CardTitle>
         <CardDescription>
-          Set a timer for your practice session. When it ends, consider switching to native content.
+         {t('focusTimerDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-col sm:flex-row items-end gap-4">
           <div className="flex-grow">
-            <Label htmlFor="practice-time" className="text-sm font-medium">Practice Time (minutes)</Label>
+            <Label htmlFor="practice-time" className="text-sm font-medium">{t('practiceTimeLabel')}</Label>
             <Input
               id="practice-time"
               type="number"
@@ -61,14 +75,14 @@ const NativeContentSwitchSection: FC<NativeContentSwitchSectionProps> = ({
             />
           </div>
           <Button onClick={onStartTimer} disabled={isTimerRunning} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
-            {isTimerRunning ? `Timer Active: ${timerDisplay}` : 'Start Timer'}
+            {isTimerRunning ? t('timerActiveButton', {time: timerDisplay}) : t('startTimerButton')}
           </Button>
         </div>
         
         {isTimerRunning && (
           <div className="text-center p-4 border border-dashed border-primary rounded-md bg-primary/10">
             <p className="text-4xl font-mono font-semibold text-primary">{timerDisplay}</p>
-            <p className="text-sm text-muted-foreground mt-1">Focus on your learning!</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('focusOnLearning')}</p>
           </div>
         )}
 
@@ -77,17 +91,17 @@ const NativeContentSwitchSection: FC<NativeContentSwitchSectionProps> = ({
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 <Bell className="mr-2 h-5 w-5 text-primary" />
-                Practice Session Complete!
+                {t('sessionCompleteTitle')}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Great job focusing! Now is a good time to immerse yourself in native French content like movies, music, or podcasts to solidify your learning.
+                {t('sessionCompleteDescription')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <Button variant="outline" onClick={onHideAlert}>Dismiss</Button>
+              <Button variant="outline" onClick={onHideAlert}>{t('dismissButton')}</Button>
               <a href="https://youtube.com/results?search_query=french+native+content" target="_blank" rel="noopener noreferrer">
                 <Button className="bg-primary hover:bg-primary/90">
-                  <ExternalLink className="mr-2 h-4 w-4" /> Find Native Content
+                  <ExternalLink className="mr-2 h-4 w-4" /> {t('findNativeContentButton')}
                 </Button>
               </a>
             </AlertDialogFooter>

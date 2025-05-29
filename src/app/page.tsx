@@ -6,6 +6,7 @@ import { Sentence, StudyMode } from '@/types';
 import { PLAYBACK_SPEEDS, DEFAULT_CHUNK_SIZE, MIN_CHUNK_SIZE, MAX_CHUNK_SIZE, DEFAULT_PRACTICE_TIME_MINUTES } from '@/lib/constants';
 import { useTimer } from '@/hooks/use-timer';
 import { useToast } from '@/hooks/use-toast';
+import { translations, type Language } from '@/lib/translations';
 
 import Header from '@/components/app/Header';
 import ControlsSection from '@/components/app/ControlsSection';
@@ -17,13 +18,12 @@ import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
-// Define an interface for the raw data structure from JSON
 interface RawSentenceData {
   id: string;
-  verb: string; // This is the French verb
-  targetSentence: string; // French sentence
-  verbEnglish: string; // This is the English verb
-  englishSentence: string; // English sentence
+  verb: string; 
+  targetSentence: string; 
+  verbEnglish: string; 
+  englishSentence: string; 
   verbAlbanian: string;
   albanianSentence: string;
   audioSrcEn?: string;
@@ -33,13 +33,11 @@ interface RawSentenceData {
 export default function LinguaLeapPage() {
   const [allSentences, setAllSentences] = useState<Sentence[]>([]);
   const [currentChunkSentences, setCurrentChunkSentences] = useState<Sentence[]>([]);
-
-  const workerRef = useRef<Worker | null>(null);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState<number>(0);
 
   const [studyMode, setStudyMode] = useState<StudyMode>(StudyMode.ReadListen);
   const [chunkSize, setChunkSize] = useState<number>(DEFAULT_CHUNK_SIZE);
-  const [selectedChunkNum, setSelectedChunkNum] = useState<number>(0); // 0-indexed
+  const [selectedChunkNum, setSelectedChunkNum] = useState<number>(0); 
   const [numChunks, setNumChunks] = useState<number>(0);
 
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
@@ -58,6 +56,8 @@ export default function LinguaLeapPage() {
   const [isContinuousPlaying, setIsContinuousPlaying] = useState<boolean>(false);
   
   const continuousPlayCurrentIndexRef = useRef<number>(0);
+
+  const [currentLanguage, setCurrentLanguage] = useState<Language>('en');
 
   const {
     timerSeconds,
@@ -99,13 +99,19 @@ export default function LinguaLeapPage() {
     }
   }, [studyMode]);
 
-  const showNotification = useCallback((message: string, variant: "default" | "destructive" = "default") => {
+  const showNotification = useCallback((messageKey: keyof typeof translations, variant: "default" | "destructive" = "default", params?: Record<string, string | number>) => {
+    let message = translations[messageKey] ? translations[messageKey][currentLanguage] : String(messageKey);
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        message = message.replace(`{${key}}`, String(value));
+      });
+    }
     toast({
-      title: variant === "destructive" ? "Error" : "Notification",
+      title: variant === "destructive" ? translations.errorTitle[currentLanguage] : translations.notificationTitle[currentLanguage],
       description: message,
       variant: variant,
     });
-  }, [toast]);
+  }, [toast, currentLanguage]);
 
   const loadSentenceData = useCallback(async () => {
     setIsInitialLoading(true);
@@ -123,24 +129,26 @@ export default function LinguaLeapPage() {
           id: parseInt(item.id, 10),
           french: item.targetSentence,
           english: item.englishSentence,
+          albanianSentence: item.albanianSentence,
           verbFrench: item.verb,
           verbEnglish: item.verbEnglish,
+          verbAlbanian: item.verbAlbanian,
           audioSrcFr: item.audioSrcFr,
           audioSrcEn: item.audioSrcEn,
         }));
         setAllSentences(transformedSentences);
-        showNotification("Sentence data loaded successfully!");
+        showNotification("sentenceDataLoaded");
       }
     } catch (err) {
       console.error('Error loading sentence data:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage);
-      setAllSentences([]); // Ensure it's empty on error
-      showNotification(`Error loading sentence data: ${errorMessage}`, "destructive");
+      setAllSentences([]); 
+      showNotification("errorLoadingSentenceData", "destructive", { error: errorMessage });
     } finally {
       setIsInitialLoading(false);
     }
-  }, [showNotification]);
+  }, [showNotification, currentLanguage]);
 
   useEffect(() => { loadSentenceData(); }, [loadSentenceData]);
 
@@ -155,7 +163,7 @@ export default function LinguaLeapPage() {
       }
     } else {
       setNumChunks(0);
-      setSelectedChunkNum(0); // Reset chunk num if no sentences
+      setSelectedChunkNum(0); 
     }
   }, [allSentences, chunkSize, selectedChunkNum]);
 
@@ -181,8 +189,8 @@ export default function LinguaLeapPage() {
     isContinuousPlayingRef.current = false; 
     stopAudio();
     continuousPlayCurrentIndexRef.current = 0;
-    showNotification("Continuous play stopped.");
-  }, [stopAudio, showNotification]);
+    showNotification("continuousPlayStopped");
+  }, [stopAudio, showNotification, currentLanguage]);
 
 
   const applyChunkSettings = useCallback(() => {
@@ -219,13 +227,13 @@ export default function LinguaLeapPage() {
       
       setIsChunkLoading(false);
       if (newChunk.length > 0) {
-        showNotification(`Chunk ${selectedChunkNum + 1} loaded!`);
+        showNotification("chunkLoaded", "default", { chunkNum: selectedChunkNum + 1 });
       } else if (allSentences.length > 0) { 
-        showNotification(`Chunk ${selectedChunkNum + 1} is empty.`);
+        showNotification("chunkEmpty", "default", { chunkNum: selectedChunkNum + 1 });
       }
     }, 200);
 
-  }, [allSentences, selectedChunkNum, chunkSize, studyMode, stopAudio, stopContinuousPlay, showNotification, isInitialLoading]);
+  }, [allSentences, selectedChunkNum, chunkSize, studyMode, stopAudio, stopContinuousPlay, showNotification, isInitialLoading, currentLanguage]);
   
   useEffect(() => { 
     if (!isInitialLoading) { 
@@ -292,7 +300,7 @@ export default function LinguaLeapPage() {
       } catch (err) {
         console.error(`Error playing ${type} audio:`, err);
         const attemptedSrc = audioElement.currentSrc || src;
-        showNotification(`Error playing audio. Source: ${attemptedSrc}. Please check if the file exists and the path is correct.`, "destructive");
+        showNotification("errorPlayingAudio", "destructive", { source: attemptedSrc});
         if (playRequestCounterRef.current === currentPlayId) {
             setIsAudioPlaying(false);
             setCurrentAudioSrcType(null);
@@ -322,7 +330,7 @@ export default function LinguaLeapPage() {
     } else {
         handleSequenceEndLogicRef.current?.();
     }
-  }, [stopAudio, showNotification]);
+  }, [stopAudio, showNotification, currentLanguage]);
 
 
   useEffect(() => {
@@ -417,16 +425,16 @@ export default function LinguaLeapPage() {
       if (mediaError) {
         errorCode = mediaError.code;
         switch (mediaError.code) {
-          case 1: // MediaError.MEDIA_ERR_ABORTED
+          case 1: 
             detailedMessage = 'Audio playback was aborted.';
             break;
-          case 2: // MediaError.MEDIA_ERR_NETWORK
+          case 2: 
             detailedMessage = 'A network error occurred while fetching the audio.';
             break;
-          case 3: // MediaError.MEDIA_ERR_DECODE
+          case 3: 
             detailedMessage = 'The audio could not be decoded.';
             break;
-          case 4: // MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
+          case 4: 
             detailedMessage = `The audio format is not supported, or the audio file was not found at '${attemptedSrc}'. Please ensure audio files are in the 'public' folder and paths are correct.`;
             break;
           default:
@@ -437,7 +445,7 @@ export default function LinguaLeapPage() {
         console.error(`Audio Error - An unknown error occurred. Attempted Source: ${attemptedSrc}`, e);
       }
       
-      showNotification(`Audio Error: ${detailedMessage} (Code: ${errorCode})`, "destructive");
+      showNotification("audioError", "destructive", {message: detailedMessage, code: errorCode});
       stopAudio(); 
       if(handleSequenceEndLogicRef.current) {
         handleSequenceEndLogicRef.current();
@@ -455,7 +463,7 @@ export default function LinguaLeapPage() {
         audioRef.current.src = ""; 
       }
     };
-  }, [playAudioSequence, stopAudio, stopContinuousPlay, showNotification]);
+  }, [playAudioSequence, stopAudio, stopContinuousPlay, showNotification, currentLanguage]);
 
 
   const togglePlayPause = useCallback(() => {
@@ -464,10 +472,10 @@ export default function LinguaLeapPage() {
       if (currentChunkSentencesRef.current.length > 0) {
         playAudioSequence();
       } else {
-        showNotification("No sentence loaded to play.", "destructive");
+        showNotification("noSentenceToPlay", "destructive");
       }
     }
-  }, [playAudioSequence, stopAudio, showNotification]);
+  }, [playAudioSequence, stopAudio, showNotification, currentLanguage]);
 
 
   const handlePrevSentence = () => {
@@ -527,9 +535,9 @@ export default function LinguaLeapPage() {
       setIsAnswerRevealed(true); 
       
       setTimeout(() => playAudioSequence(currentChunkSentencesRef.current[0], true), 100);
-      showNotification("Starting continuous play for the chunk.");
+      showNotification("startingContinuousPlay");
     } else {
-      showNotification("No sentences in chunk to play continuously.", "destructive");
+      showNotification("noSentencesInChunkToPlay", "destructive");
     }
   };
 
@@ -543,10 +551,10 @@ export default function LinguaLeapPage() {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-destructive p-8 text-center">
         <AlertCircle className="h-16 w-16 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Error Loading Application Data</h1>
+        <h1 className="text-2xl font-bold mb-2">{translations.errorLoadingAppData[currentLanguage]}</h1>
         <p className="mb-6">{error}</p>
         <Button onClick={loadSentenceData} variant="destructive">
-          Try Reloading Data
+          {translations.tryReloadingData[currentLanguage]}
         </Button>
       </div>
     );
@@ -555,10 +563,11 @@ export default function LinguaLeapPage() {
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 font-sans bg-gradient-to-br from-blue-100 via-white to-purple-100">
       <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50">
-        <Header />
+        <Header language={currentLanguage} onLanguageChange={setCurrentLanguage} />
         
         <div className="mt-8 space-y-10 md:space-y-12">
           <ControlsSection
+            language={currentLanguage}
             studyMode={studyMode}
             onStudyModeChange={(newMode) => { 
               setStudyMode(newMode); 
@@ -574,6 +583,7 @@ export default function LinguaLeapPage() {
             isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)} 
           />
           <StudyArea
+            language={currentLanguage}
             sentence={currentSentenceData}
             studyMode={studyMode}
             isAnswerRevealed={isAnswerRevealed}
@@ -602,6 +612,7 @@ export default function LinguaLeapPage() {
             allSentencesCount={allSentences.length}
           />
           <ContinuousListeningSection
+            language={currentLanguage}
             isPlaying={isContinuousPlaying}
             onPlayAll={handlePlayAllChunkAudio}
             onStop={stopContinuousPlay}
@@ -611,6 +622,7 @@ export default function LinguaLeapPage() {
             isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
           />
           <NativeContentSwitchSection
+            language={currentLanguage}
             practiceTimeMinutes={practiceTimeMinutes}
             onPracticeTimeChange={setPracticeTimeMinutes}
             onStartTimer={startTimer}
@@ -619,7 +631,7 @@ export default function LinguaLeapPage() {
             showSwitchToNativeAlert={showSwitchToNativeAlert}
             onHideAlert={resetTimerAlert}
           />
-          <Footer />
+          <Footer language={currentLanguage} />
         </div>
       </div>
     </div>
