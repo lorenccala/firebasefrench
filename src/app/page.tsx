@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sentence, StudyMode } from '@/types';
-import { PLAYBACK_SPEEDS, DEFAULT_CHUNK_SIZE, DEFAULT_PRACTICE_TIME_MINUTES } from '@/lib/constants'; // MIN_CHUNK_SIZE, MAX_CHUNK_SIZE no longer needed for direct input
+import { PLAYBACK_SPEEDS, DEFAULT_CHUNK_SIZE, DEFAULT_PRACTICE_TIME_MINUTES } from '@/lib/constants';
 import { useTimer } from '@/hooks/use-timer';
 import { useToast } from '@/hooks/use-toast';
 import { translations, type Language } from '@/lib/translations';
@@ -18,8 +18,8 @@ import Footer from '@/components/app/Footer';
 import LanguageSwitcher from '@/components/app/LanguageSwitcher';
 import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb } from 'lucide-react'; // Added Lightbulb for potential GrammarExplainer re-integration if needed
-import GrammarExplainer from '@/components/app/GrammarExplainer'; // Import GrammarExplainer
+import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb, UserCircle } from 'lucide-react'; 
+import GrammarExplainer from '@/components/app/GrammarExplainer';
 import {
   SidebarProvider,
   Sidebar,
@@ -35,18 +35,18 @@ import {
 
 interface RawSentenceDataFromFile {
   id: string;
-  verb: string; // French verb
-  targetSentence: string; // French sentence
+  verb: string; 
+  targetSentence: string; 
   verbEnglish: string;
   englishSentence: string;
-  verbAlbanian?: string; // Optional: if present in JSON
-  albanianSentence?: string; // Optional: if present in JSON
+  verbAlbanian?: string; 
+  albanianSentence?: string; 
   audioSrcFr?: string;
   audioSrcEn?: string;
   audioSrcAl?: string;
 }
 
-type ActiveSection = 'config' | 'study' | 'flashcards' | 'builder' | 'timer' | 'grammar'; // 'listening' removed, 'grammar' added
+type ActiveSection = 'config' | 'study' | 'flashcards' | 'builder' | 'timer' | 'grammar';
 
 export default function LinguaLeapPage() {
   const [allSentences, setAllSentences] = useState<Sentence[]>([]);
@@ -205,7 +205,7 @@ export default function LinguaLeapPage() {
     } finally {
       setIsInitialLoading(false);
     }
-  }, [showNotification, t]); // Added t to dependency array
+  }, [showNotification, t]); 
 
   useEffect(() => { loadSentenceData(); }, [loadSentenceData]);
 
@@ -453,11 +453,11 @@ export default function LinguaLeapPage() {
     let secondaryLang: 'en' | 'al' | 'fr' | null = null;
 
     if (currentLanguage === 'al') {
-      primaryAudioSrc = sentence.audioSrcFr; // French first
+      primaryAudioSrc = sentence.audioSrcFr; 
       primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcAl; // Albanian second
+      secondaryAudioSrc = sentence.audioSrcAl; 
       secondaryLang = 'al';
-    } else { // English UI or any other
+    } else { 
       primaryAudioSrc = sentence.audioSrcFr;
       primaryLang = 'fr';
       secondaryAudioSrc = sentence.audioSrcEn;
@@ -769,7 +769,7 @@ export default function LinguaLeapPage() {
         );
       case 'grammar':
         return (
-           <div className="max-w-2xl mx-auto"> {/* Optional: Constrain width for better readability */}
+           <div className="max-w-2xl mx-auto">
             <GrammarExplainer
               language={currentLanguage}
               sentence={currentSentenceData}
@@ -787,8 +787,8 @@ export default function LinguaLeapPage() {
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
-             <img src="/logo.svg" alt="LinguaLeap Logo" className="h-8 w-8" data-ai-hint="logo" />
-            <span className="text-lg font-semibold">{t('appTitle')}</span>
+            <UserCircle className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold text-primary">{t('appTitle')}</span>
             <SidebarTrigger className="ml-auto md:hidden" />
           </div>
         </SidebarHeader>
@@ -880,11 +880,11 @@ export default function LinguaLeapPage() {
                 activeSection === 'flashcards' ? 'flashcardGameTitle' :
                 activeSection === 'builder' ? 'sentenceBuilderTitle' :
                 activeSection === 'grammar' ? 'grammarExplanationTitle' :
-                'focusTimerTitle' // Assuming 'timer' is the last default
+                'focusTimerTitle' 
             )}</span>
           </div>
           <div className={mainContentLayout}>
-            <div className="space-y-6 md:space-y-8"> {/* Adjusted spacing for sections */}
+            <div className="space-y-6 md:space-y-8">
               {renderActiveSection()}
               <Footer language={currentLanguage} />
             </div>
@@ -894,6 +894,5 @@ export default function LinguaLeapPage() {
     </SidebarProvider>
   );
 }
-
 
     
