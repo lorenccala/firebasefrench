@@ -15,7 +15,7 @@ interface RawSentenceData {
 }
 
 // Ensure the global self is properly typed for a Web Worker
-declare const self: DedicatedWorkerGlobalScope;
+
 
 self.onmessage = async (event: MessageEvent<string>) => {
   if (event.data === 'load_data') {
