@@ -1,8 +1,9 @@
+
 import type { FC } from 'react';
 
 const Footer: FC = () => {
   return (
-    <footer className="mt-12 pt-8 border-t border-border text-center">
+    <footer className="pt-8 border-t border-border text-center">
       <p className="text-sm text-muted-foreground">
         &copy; {new Date().getFullYear()} LinguaLeap. All rights reserved.
       </p>

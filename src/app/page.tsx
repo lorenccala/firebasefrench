@@ -121,8 +121,8 @@ export default function LinguaLeapPage() {
           id: parseInt(item.id, 10),
           french: item.targetSentence,
           english: item.englishSentence,
-          verbFrench: item.verb, // Map French verb
-          verbEnglish: item.verbEnglish, // Map English verb
+          verbFrench: item.verb,
+          verbEnglish: item.verbEnglish,
           audioSrcFr: item.audioSrcFr,
           audioSrcEn: item.audioSrcEn,
         }));
@@ -406,7 +406,7 @@ export default function LinguaLeapPage() {
 
     audio.addEventListener('ended', handleAudioEnded);
     
-    audio.addEventListener('error', (e) => {
+    const audioErrorHandler = (e: Event) => {
       const mediaError = audio.error; 
       const attemptedSrc = audio.currentSrc || (e.target as HTMLAudioElement)?.src || 'Source unknown';
       let detailedMessage = 'Unknown audio error occurred.';
@@ -440,11 +440,13 @@ export default function LinguaLeapPage() {
       if(handleSequenceEndLogicRef.current) {
         handleSequenceEndLogicRef.current();
       }
-    });
+    };
+    audio.addEventListener('error', audioErrorHandler);
+
 
     return () => {
       audio.removeEventListener('ended', handleAudioEnded);
-      audio.removeEventListener('error', (e) => { /* Re-reference the modified handler if needed or ensure this matches for removal */ });
+      audio.removeEventListener('error', audioErrorHandler);
       if (enPlayTimeoutRef.current) clearTimeout(enPlayTimeoutRef.current);
       if (audioRef.current) {
         audioRef.current.pause();
@@ -550,72 +552,77 @@ export default function LinguaLeapPage() {
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 font-sans bg-gradient-to-br from-blue-100 via-white to-purple-100">
-      <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50">
         <Header />
-        <main className="mt-8 space-y-10 md:space-y-12">
-          <ControlsSection
-            studyMode={studyMode}
-            onStudyModeChange={(newMode) => { 
-              setStudyMode(newMode); 
-              stopAudio();
-            }}
-            chunkSize={chunkSize}
-            onChunkSizeChange={setChunkSize}
-            selectedChunkNum={selectedChunkNum}
-            onSelectedChunkNumChange={setSelectedChunkNum}
-            numChunks={numChunks}
-            onLoadChunk={applyChunkSettings}
-            allSentencesCount={allSentences.length}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)} 
-          />
-          <StudyArea
-            sentence={currentSentenceData}
-            studyMode={studyMode}
-            isAnswerRevealed={isAnswerRevealed}
-            onRevealAnswer={handleRevealAnswer}
-            audioControls={{
-              isPlaying: isAudioPlaying,
-              onTogglePlayPause: togglePlayPause,
-              onPrev: handlePrevSentence,
-              onNext: handleNextSentence,
-              isLooping: isLooping,
-              onToggleLoop: () => setIsLooping(prev => !prev),
-              playbackSpeed: playbackSpeed,
-              onPlaybackSpeedChange: (speed) => {
-                setPlaybackSpeed(speed);
-                if (audioRef.current) audioRef.current.playbackRate = speed;
-              },
-              disablePrev: currentSentenceIndex === 0,
-              disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,
-            }}
-            sentenceCounter={{
-              currentNum: currentChunkSentences.length > 0 ? currentSentenceIndex + 1 : 0,
-              totalInChunk: currentChunkSentences.length,
-              totalAll: allSentences.length,
-            }}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
-            allSentencesCount={allSentences.length}
-          />
-          <ContinuousListeningSection
-            isPlaying={isContinuousPlaying}
-            onPlayAll={handlePlayAllChunkAudio}
-            onStop={stopContinuousPlay}
-            disabled={currentChunkSentences.length === 0 || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
-            currentSentenceIndex={isContinuousPlaying ? continuousPlayCurrentIndexRef.current : -1}
-            totalSentencesInChunk={currentChunkSentences.length}
-            isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
-          />
-          <NativeContentSwitchSection
-            practiceTimeMinutes={practiceTimeMinutes}
-            onPracticeTimeChange={setPracticeTimeMinutes}
-            onStartTimer={startTimer}
-            timerDisplay={formatTime(timerSeconds)}
-            isTimerRunning={isTimerRunning}
-            showSwitchToNativeAlert={showSwitchToNativeAlert}
-            onHideAlert={resetTimerAlert}
-          />
-        </main>
-        <Footer />
+        
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-x-12 gap-y-10">
+          <main className="lg:col-span-2 space-y-10 md:space-y-12">
+            <StudyArea
+              sentence={currentSentenceData}
+              studyMode={studyMode}
+              isAnswerRevealed={isAnswerRevealed}
+              onRevealAnswer={handleRevealAnswer}
+              audioControls={{
+                isPlaying: isAudioPlaying,
+                onTogglePlayPause: togglePlayPause,
+                onPrev: handlePrevSentence,
+                onNext: handleNextSentence,
+                isLooping: isLooping,
+                onToggleLoop: () => setIsLooping(prev => !prev),
+                playbackSpeed: playbackSpeed,
+                onPlaybackSpeedChange: (speed) => {
+                  setPlaybackSpeed(speed);
+                  if (audioRef.current) audioRef.current.playbackRate = speed;
+                },
+                disablePrev: currentSentenceIndex === 0,
+                disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,
+              }}
+              sentenceCounter={{
+                currentNum: currentChunkSentences.length > 0 ? currentSentenceIndex + 1 : 0,
+                totalInChunk: currentChunkSentences.length,
+                totalAll: allSentences.length,
+              }}
+              isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
+              allSentencesCount={allSentences.length}
+            />
+            <ContinuousListeningSection
+              isPlaying={isContinuousPlaying}
+              onPlayAll={handlePlayAllChunkAudio}
+              onStop={stopContinuousPlay}
+              disabled={currentChunkSentences.length === 0 || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+              currentSentenceIndex={isContinuousPlaying ? continuousPlayCurrentIndexRef.current : -1}
+              totalSentencesInChunk={currentChunkSentences.length}
+              isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+            />
+            <NativeContentSwitchSection
+              practiceTimeMinutes={practiceTimeMinutes}
+              onPracticeTimeChange={setPracticeTimeMinutes}
+              onStartTimer={startTimer}
+              timerDisplay={formatTime(timerSeconds)}
+              isTimerRunning={isTimerRunning}
+              showSwitchToNativeAlert={showSwitchToNativeAlert}
+              onHideAlert={resetTimerAlert}
+            />
+          </main>
+          <aside className="lg:col-span-1 space-y-10 md:space-y-12 lg:sticky lg:top-10 h-fit">
+            <ControlsSection
+              studyMode={studyMode}
+              onStudyModeChange={(newMode) => { 
+                setStudyMode(newMode); 
+                stopAudio();
+              }}
+              chunkSize={chunkSize}
+              onChunkSizeChange={setChunkSize}
+              selectedChunkNum={selectedChunkNum}
+              onSelectedChunkNumChange={setSelectedChunkNum}
+              numChunks={numChunks}
+              onLoadChunk={applyChunkSettings}
+              allSentencesCount={allSentences.length}
+              isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)} 
+            />
+            <Footer />
+          </aside>
+        </div>
       </div>
     </div>
   );
