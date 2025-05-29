@@ -18,7 +18,6 @@ import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
-// RawSentenceData interface is simplified as audioSrc fields are removed
 interface RawSentenceDataFromFile {
   id: string;
   verb: string;
@@ -27,7 +26,6 @@ interface RawSentenceDataFromFile {
   englishSentence: string;
   verbAlbanian: string;
   albanianSentence: string;
-  // audioSrcEn, audioSrcFr, audioSrcAl are removed
 }
 
 export default function LinguaLeapPage() {
@@ -49,7 +47,7 @@ export default function LinguaLeapPage() {
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [isLooping, setIsLooping] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const [currentAudioSrcType, setCurrentAudioSrcType] = useState<'fr' | 'en' | 'al' | null>(null); // Represents language being spoken
+  const [currentAudioSrcType, setCurrentAudioSrcType] = useState<'fr' | 'en' | 'al' | null>(null); 
 
   const [isAnswerRevealed, setIsAnswerRevealed] = useState<boolean>(studyMode !== StudyMode.ActiveRecall);
   const [isContinuousPlaying, setIsContinuousPlaying] = useState<boolean>(false);
@@ -69,7 +67,6 @@ export default function LinguaLeapPage() {
     resetTimerAlert
   } = useTimer(DEFAULT_PRACTICE_TIME_MINUTES);
 
-  // Refs for state values to be used in callbacks
   const currentSentenceIndexRef = useRef(currentSentenceIndex);
   const currentChunkSentencesRef = useRef(currentChunkSentences);
   const playbackSpeedRef = useRef(playbackSpeed);
@@ -79,9 +76,9 @@ export default function LinguaLeapPage() {
   const isLoopingRef = useRef(isLooping);
   const currentLanguageRef = useRef(currentLanguage);
 
-  const enPlayDelayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioSequenceDelayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleSequenceEndLogicRef = useRef<(() => void) | null>(null);
-  const playRequestCounterRef = useRef<number>(0); // To manage overlapping play requests
+  const playRequestCounterRef = useRef<number>(0); 
 
   const [speechSynthesisVoices, setSpeechSynthesisVoices] = useState<SpeechSynthesisVoice[]>([]);
 
@@ -101,7 +98,7 @@ export default function LinguaLeapPage() {
         setSpeechSynthesisVoices(voices);
       }
     };
-    loadVoices(); // Initial attempt
+    loadVoices(); 
     if (typeof window !== 'undefined' && window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
@@ -109,7 +106,7 @@ export default function LinguaLeapPage() {
       if (typeof window !== 'undefined' && window.speechSynthesis.onvoiceschanged !== undefined) {
         window.speechSynthesis.onvoiceschanged = null;
       }
-      window.speechSynthesis.cancel(); // Cancel any speech on unmount
+      window.speechSynthesis.cancel(); 
     };
   }, []);
 
@@ -155,7 +152,6 @@ export default function LinguaLeapPage() {
           verbFrench: item.verb,
           verbEnglish: item.verbEnglish,
           verbAlbanian: item.verbAlbanian,
-          // audioSrc fields are removed
         }));
         setAllSentences(transformedSentences);
         showNotification("sentenceDataLoaded");
@@ -190,12 +186,12 @@ export default function LinguaLeapPage() {
 
   const stopAudio = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      playRequestCounterRef.current++; // Invalidate previous play requests
+      playRequestCounterRef.current++; 
       window.speechSynthesis.cancel();
     }
-    if (enPlayDelayTimeoutRef.current) {
-      clearTimeout(enPlayDelayTimeoutRef.current);
-      enPlayDelayTimeoutRef.current = null;
+    if (audioSequenceDelayTimeoutRef.current) {
+      clearTimeout(audioSequenceDelayTimeoutRef.current);
+      audioSequenceDelayTimeoutRef.current = null;
     }
     setIsAudioPlaying(false);
     setCurrentAudioSrcType(null);
@@ -244,43 +240,38 @@ export default function LinguaLeapPage() {
   const getVoiceForLang = useCallback((targetLang: 'fr' | 'en' | 'al'): SpeechSynthesisVoice | undefined => {
     if (speechSynthesisVoices.length === 0) {
       console.warn("TTS voices not loaded yet for getVoiceForLang.");
-      // Attempt to populate voices again if empty, though ideally they are loaded by useEffect
       const currentVoices = window.speechSynthesis.getVoices();
       if (currentVoices.length > 0) {
         setSpeechSynthesisVoices(currentVoices);
       } else {
-        return undefined; // No voices available yet
+        return undefined; 
       }
     }
 
     let langCodePrefix = '';
-    let fullLangCode = ''; // For exact match
-    let langVariations: string[] = []; // For broader matching
+    let fullLangCode = ''; 
+    let langVariations: string[] = []; 
 
     if (targetLang === 'fr') { langCodePrefix = 'fr'; fullLangCode = 'fr-FR'; langVariations = ['fr-CA', 'fr-BE', 'fr-CH']; }
     else if (targetLang === 'en') { langCodePrefix = 'en'; fullLangCode = 'en-US'; langVariations = ['en-GB', 'en-AU', 'en-CA']; }
-    else if (targetLang === 'al') { langCodePrefix = 'sq'; fullLangCode = 'sq-AL'; langVariations = [];} // Albanian might have fewer variations
+    else if (targetLang === 'al') { langCodePrefix = 'sq'; fullLangCode = 'sq-AL'; langVariations = [];}
 
-    // 1. Try exact full language code
     let voice = speechSynthesisVoices.find(v => v.lang === fullLangCode);
     if (voice) return voice;
 
-    // 2. Try common variations
     for (const variation of langVariations) {
       voice = speechSynthesisVoices.find(v => v.lang === variation);
       if (voice) return voice;
     }
     
-    // 3. Try prefix match (e.g., 'fr' for 'fr-FR', 'fr-CA')
     voice = speechSynthesisVoices.find(v => v.lang.startsWith(langCodePrefix + '-'));
     if (voice) return voice;
 
-    // 4. Try just the language code itself (e.g. 'fr')
     voice = speechSynthesisVoices.find(v => v.lang === langCodePrefix);
     if (voice) return voice;
     
     console.warn(`No specific voice found for language: ${targetLang} (${fullLangCode}). Utterance will use browser default if available.`);
-    return undefined; // Let browser pick, but set utterance.lang
+    return undefined; 
   }, [speechSynthesisVoices]);
 
 
@@ -288,7 +279,7 @@ export default function LinguaLeapPage() {
     if (typeof window === 'undefined' || !window.speechSynthesis || playRequestCounterRef.current !== playId) {
       if (playRequestCounterRef.current !== playId) console.log("TTS request invalidated");
       else console.log("Speech synthesis not available or request invalidated.");
-      onEndCallback(); // Ensure sequence continues or ends
+      onEndCallback(); 
       return;
     }
 
@@ -304,7 +295,6 @@ export default function LinguaLeapPage() {
     if (voice) {
       utterance.voice = voice;
     }
-    // Set lang attribute regardless of finding a specific voice, helps browser pick default
     utterance.lang = lang === 'fr' ? 'fr-FR' : lang === 'en' ? 'en-US' : 'sq-AL';
     utterance.rate = playbackSpeedRef.current;
 
@@ -317,8 +307,6 @@ export default function LinguaLeapPage() {
 
     utterance.onend = () => {
       if (playRequestCounterRef.current === playId) {
-        // setIsAudioPlaying(false); // Handled by onEndCallback or next part of sequence
-        // setCurrentAudioSrcType(null);
         onEndCallback();
       }
     };
@@ -329,7 +317,7 @@ export default function LinguaLeapPage() {
       if (playRequestCounterRef.current === playId) {
         setIsAudioPlaying(false);
         setCurrentAudioSrcType(null);
-        onEndCallback(); // Ensure sequence continues or ends
+        onEndCallback(); 
       }
     };
     
@@ -346,11 +334,10 @@ export default function LinguaLeapPage() {
 
     if (isPartOfContinuousSequence && !isContinuousPlayingRef.current) return;
 
-    stopAudio(); // Stops current speech and clears timeouts
+    stopAudio(); 
 
-    // Short delay to ensure speech cancelled before starting new.
     await new Promise(resolve => setTimeout(resolve, 50)); 
-    if (playRequestCounterRef.current !== currentPlayId) return; // Check if invalidated during delay
+    if (playRequestCounterRef.current !== currentPlayId) return; 
 
 
     const sentence = sentenceToPlay || currentChunkSentencesRef.current[currentSentenceIndexRef.current];
@@ -363,23 +350,26 @@ export default function LinguaLeapPage() {
 
     let primaryText: string;
     let primaryLang: 'fr' | 'al';
-    let secondaryText: string | null = sentence.english; // English is always secondary for now
-    let secondaryLang: 'en' = 'en';
+    let secondaryText: string | null;
+    let secondaryLang: 'en' | 'al';
 
     if (currentLanguageRef.current === 'al') {
-      primaryText = sentence.albanianSentence;
-      primaryLang = 'al';
-    } else { // Default to French if UI is English or other
+      primaryText = sentence.french; // French first
+      primaryLang = 'fr';
+      secondaryText = sentence.albanianSentence; // Albanian second
+      secondaryLang = 'al';
+    } else { // Default to English UI: French first, English second
       primaryText = sentence.french;
       primaryLang = 'fr';
+      secondaryText = sentence.english;
+      secondaryLang = 'en';
     }
 
     const playPrimary = () => {
       playTTS(primaryText, primaryLang, currentPlayId, () => {
         if (playRequestCounterRef.current !== currentPlayId) return;
         if (secondaryText) {
-          // Play secondary after a delay
-          enPlayDelayTimeoutRef.current = setTimeout(() => {
+          audioSequenceDelayTimeoutRef.current = setTimeout(() => {
             if (playRequestCounterRef.current !== currentPlayId) return;
             playTTS(secondaryText!, secondaryLang, currentPlayId, () => {
               if (playRequestCounterRef.current !== currentPlayId) return;
@@ -402,14 +392,11 @@ export default function LinguaLeapPage() {
 
 
   useEffect(() => {
-    // This effect now mostly manages the overall sequence logic (looping, continuous play)
-    // Individual utterance 'onend' handles transitions between primary/secondary speech
     const handleSequenceEndLogicInternal = () => {
-      const currentGlobalPlayId = playRequestCounterRef.current; // Capture playId at time of decision
+      const currentGlobalPlayId = playRequestCounterRef.current; 
 
       if (isLoopingRef.current && !isContinuousPlayingRef.current) {
         setTimeout(() => {
-          // Check if still the latest request before re-playing
           if (playRequestCounterRef.current === currentGlobalPlayId && isLoopingRef.current) { 
             playAudioSequence();
           }
@@ -428,8 +415,7 @@ export default function LinguaLeapPage() {
           stopContinuousPlay();
         }
       } else {
-        // If not looping and not continuous, ensure audio state is fully reset
-         if (playRequestCounterRef.current === currentGlobalPlayId) { // only if this sequence is still valid
+         if (playRequestCounterRef.current === currentGlobalPlayId) { 
             setIsAudioPlaying(false);
             setCurrentAudioSrcType(null);
         }
@@ -438,16 +424,15 @@ export default function LinguaLeapPage() {
 
     handleSequenceEndLogicRef.current = handleSequenceEndLogicInternal;
 
-    // Cleanup: cancel any ongoing speech when component unmounts or dependencies change significantly
     return () => {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
-      if (enPlayDelayTimeoutRef.current) {
-        clearTimeout(enPlayDelayTimeoutRef.current);
+      if (audioSequenceDelayTimeoutRef.current) {
+        clearTimeout(audioSequenceDelayTimeoutRef.current);
       }
     };
-  }, [playAudioSequence, stopContinuousPlay]); // Dependencies carefully chosen
+  }, [playAudioSequence, stopContinuousPlay]); 
 
 
   const togglePlayPause = useCallback(() => {
@@ -541,7 +526,7 @@ export default function LinguaLeapPage() {
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 font-sans bg-gradient-to-br from-blue-100 via-white to-purple-100">
       <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50">
         <Header language={currentLanguage} onLanguageChange={(lang) => {
-          stopAudio(); // Stop audio when language changes
+          stopAudio(); 
           setCurrentLanguage(lang);
         }} />
 
@@ -578,8 +563,6 @@ export default function LinguaLeapPage() {
               playbackSpeed: playbackSpeed,
               onPlaybackSpeedChange: (speed) => {
                 setPlaybackSpeed(speed);
-                // If audio is playing, stopping and restarting might be needed for speed change to take effect immediately with TTS.
-                // For simplicity, current TTS implementation might only apply new speed to next utterance.
               },
               disablePrev: currentSentenceIndex === 0,
               disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,

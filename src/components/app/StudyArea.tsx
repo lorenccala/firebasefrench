@@ -142,8 +142,9 @@ const StudyArea: FC<StudyAreaProps> = ({
 
   const progressPercentage = sentenceCounter.totalInChunk > 0 ? (sentenceCounter.currentNum / sentenceCounter.totalInChunk) * 100 : 0;
   
-  const targetSentenceText = language === 'al' && sentence ? sentence.albanianSentence : (sentence ? sentence.french : '');
-  const translationText = sentence ? sentence.english : '';
+  const targetSentenceText = sentence ? sentence.french : ''; // Always show French sentence as primary
+  const translationText = language === 'al' && sentence ? sentence.albanianSentence : (sentence ? sentence.english : '');
+
 
   return (
     <Card className="shadow-lg w-full">
@@ -160,15 +161,19 @@ const StudyArea: FC<StudyAreaProps> = ({
         {sentence ? (
           <div className="p-6 rounded-lg bg-muted/50 min-h-[160px] flex flex-col justify-center shadow-inner">
             <div className="min-h-[100px] mb-4 flex flex-col justify-center">
-              { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && sentence.verbFrench && sentence.verbEnglish && (
+              { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && sentence.verbFrench && (
                 <div className="mb-3 text-center">
                   <p className="text-sm text-muted-foreground" data-ai-hint="verb conjugation">
                     {t('verbLabel')}:{' '}
                     <span className="font-semibold text-primary">
-                      {language === 'al' && sentence.verbAlbanian ? sentence.verbAlbanian : sentence.verbFrench}
-                    </span>{' '}
-                    ({t('verbToLabel')}{' '}
-                    {sentence.verbEnglish})
+                      {sentence.verbFrench}
+                    </span>
+                    {language === 'al' && sentence.verbAlbanian && (
+                      <span className="ml-1">({sentence.verbAlbanian})</span>
+                    )}
+                    {language === 'en' && sentence.verbEnglish && (
+                      <span className="ml-1">({t('verbToLabel')} {sentence.verbEnglish})</span>
+                    )}
                   </p>
                 </div>
               )}
@@ -176,7 +181,7 @@ const StudyArea: FC<StudyAreaProps> = ({
                 {targetSentenceText}
               </p>
               {(isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && (
-                 <p className="text-lg text-muted-foreground mt-3 text-center pt-2" data-ai-hint="english translation text">
+                 <p className="text-lg text-muted-foreground mt-3 text-center pt-2" data-ai-hint="translation text">
                   {translationText}
                 </p>
               )}
@@ -253,3 +258,4 @@ const StudyArea: FC<StudyAreaProps> = ({
 };
 
 export default StudyArea;
+
