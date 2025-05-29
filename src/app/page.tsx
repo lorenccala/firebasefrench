@@ -96,7 +96,6 @@ export default function LinguaLeapPage() {
   const isAudioPlayingRef = useRef(isAudioPlaying);
   const isContinuousPlayingRef = useRef(isContinuousPlaying);
   const isLoopingRef = useRef(isLooping);
-  const currentLanguageRef = useRef(currentLanguage);
 
   const audioSequenceDelayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleSequenceEndLogicRef = useRef<(() => void) | null>(null);
@@ -114,7 +113,32 @@ export default function LinguaLeapPage() {
   useEffect(() => { isAudioPlayingRef.current = isAudioPlaying; }, [isAudioPlaying]);
   useEffect(() => { isContinuousPlayingRef.current = isContinuousPlaying; }, [isContinuousPlaying]);
   useEffect(() => { isLoopingRef.current = isLooping; }, [isLooping]);
-  useEffect(() => { currentLanguageRef.current = currentLanguage; }, [currentLanguage]);
+
+
+  const t = useCallback((key: keyof typeof translations, params?: Record<string, string | number>) => {
+    let text = translations[key]?.[currentLanguage] ?? String(key);
+    if (params) {
+      Object.entries(params).forEach(([paramKey, value]) => {
+        text = text.replace(`{${paramKey}}`, String(value));
+      });
+    }
+    return text;
+  }, [currentLanguage]);
+
+  const showNotification = useCallback((messageKey: keyof typeof translations, variant: "default" | "destructive" = "default", params?: Record<string, string | number>) => {
+    let message = translations[messageKey]?.[currentLanguage] ?? String(messageKey);
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        message = message.replace(`{${key}}`, String(value));
+      });
+    }
+    toast({
+      title: variant === "destructive" ? t('errorTitle') : t('notificationTitle'),
+      description: message,
+      variant: variant,
+    });
+  }, [toast, t, currentLanguage]);
+
 
   useEffect(() => {
     audioRef.current = new Audio();
@@ -143,29 +167,6 @@ export default function LinguaLeapPage() {
     }
   }, [studyMode]);
 
-  const t = (key: keyof typeof translations, params?: Record<string, string | number>) => {
-    let text = translations[key]?.[currentLanguageRef.current] ?? String(key);
-    if (params) {
-      Object.entries(params).forEach(([paramKey, value]) => {
-        text = text.replace(`{${paramKey}}`, String(value));
-      });
-    }
-    return text;
-  };
-
-  const showNotification = useCallback((messageKey: keyof typeof translations, variant: "default" | "destructive" = "default", params?: Record<string, string | number>) => {
-    let message = translations[messageKey]?.[currentLanguageRef.current] ?? String(messageKey);
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        message = message.replace(`{${key}}`, String(value));
-      });
-    }
-    toast({
-      title: variant === "destructive" ? translations.errorTitle[currentLanguageRef.current] : translations.notificationTitle[currentLanguageRef.current],
-      description: message,
-      variant: variant,
-    });
-  }, [toast]);
 
   const loadSentenceData = useCallback(async () => {
     setIsInitialLoading(true);
@@ -283,11 +284,17 @@ export default function LinguaLeapPage() {
 
 
   const playAudioFile = useCallback((
-    originalSrc: string,
+    originalSrc: string | undefined,
     lang: 'fr' | 'en' | 'al',
     playId: number,
     onEndCallback: () => void
   ) => {
+    if (!originalSrc) {
+      console.log(`Audio file play for lang "${lang}" (Play ID ${playId}) skipped: No source provided.`);
+      if (playRequestCounterRef.current === playId) onEndCallback(); // Critical to call onEnd if src is missing
+      return;
+    }
+
     if (!audioRef.current) {
       console.warn("Audio element not ready.");
       setIsAudioPlaying(false);
@@ -440,18 +447,20 @@ export default function LinguaLeapPage() {
     console.log(`PlayAudioSequence (ID ${currentPlayId}): Starting for sentence ID ${sentence.id}`);
 
     let primaryAudioSrc: string | undefined;
-    let primaryLang: 'fr';
+    let primaryLang: 'fr' | 'al';
     let secondaryAudioSrc: string | undefined;
-    let secondaryLang: 'en' | 'al' | null = null;
+    let secondaryLang: 'en' | 'al' | 'fr' | null = null; // Can be 'fr' if primary is 'al'
 
-    primaryAudioSrc = sentence.audioSrcFr;
-    primaryLang = 'fr';
-
-    if (currentLanguageRef.current === 'al') {
-      secondaryAudioSrc = sentence.audioSrcAl; 
+    // Determine primary and secondary based on UI language
+    if (currentLanguage === 'al') {
+      primaryAudioSrc = sentence.audioSrcFr;
+      primaryLang = 'fr';
+      secondaryAudioSrc = sentence.audioSrcAl;
       secondaryLang = 'al';
-    } else { 
-      secondaryAudioSrc = sentence.audioSrcEn; 
+    } else { // English UI or any other
+      primaryAudioSrc = sentence.audioSrcFr;
+      primaryLang = 'fr';
+      secondaryAudioSrc = sentence.audioSrcEn;
       secondaryLang = 'en';
     }
 
@@ -510,7 +519,7 @@ export default function LinguaLeapPage() {
     };
 
     playPrimary();
-  }, [stopAudio, playAudioFile]);
+  }, [stopAudio, playAudioFile, currentLanguage]);
 
 
   useEffect(() => {
@@ -876,5 +885,3 @@ export default function LinguaLeapPage() {
     </SidebarProvider>
   );
 }
-
-    
