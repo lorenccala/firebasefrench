@@ -8,99 +8,99 @@ body {
 
 @layer base {
   :root {
-    --background: 260 17% 96%; /* Very light gray */
-    --foreground: 260 25% 25%; /* Darker gray for text */
+    --background: 240 10% 97%; /* Very light cool gray */
+    --foreground: 240 10% 20%; /* Dark gray for text */
 
-    --muted: 260 15% 90%;
-    --muted-foreground: 260 10% 45%;
+    --muted: 240 10% 92%;
+    --muted-foreground: 240 10% 45%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 260 25% 25%;
+    --popover-foreground: 240 10% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 260 25% 25%;
+    --card-foreground: 240 10% 20%;
 
-    --border: 260 10% 85%;
-    --input: 260 10% 88%;
+    --border: 240 10% 88%;
+    --input: 240 10% 90%;
 
-    --primary: 261 33% 70%; /* Muted violet - chosen as primary for stronger interactive elements */
+    --primary: 265 65% 60%; /* Vibrant Purple */
     --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 261 100% 87%; /* Soft lavender - chosen as secondary */
-    --secondary-foreground: 260 25% 25%; /* Darker gray for text on lavender */
+    --secondary: 265 60% 90%; /* Very Light Lavender (for progress track, etc.) */
+    --secondary-foreground: 265 50% 50%; /* Darker purple text for elements on secondary bg */
 
-    --accent: 261 40% 78%; /* A slightly more saturated lavender for accents if needed */
-    --accent-foreground: 260 25% 20%;
+    --accent: 265 60% 75%; /* Light Purple for hovers/accents */
+    --accent-foreground: 265 50% 30%; /* Dark purple text on accent */
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 261 33% 65%; /* Muted violet, slightly darker for ring */
+    --ring: 265 65% 55%; /* Vibrant purple, slightly darker for ring */
 
     --radius: 0.5rem;
 
-    /* Sidebar specific colors - can be adjusted if sidebar is used extensively */
-    --sidebar-background: 260 17% 94%;
-    --sidebar-foreground: 260 25% 25%;
-    --sidebar-primary: 261 33% 70%;
+    /* Sidebar specific colors */
+    --sidebar-background: 240 10% 95%;
+    --sidebar-foreground: 240 10% 20%;
+    --sidebar-primary: 265 65% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 261 100% 87%;
-    --sidebar-accent-foreground: 260 25% 25%;
-    --sidebar-border: 260 10% 85%;
-    --sidebar-ring: 261 33% 65%;
+    --sidebar-accent: 265 60% 90%;
+    --sidebar-accent-foreground: 265 50% 50%;
+    --sidebar-border: 240 10% 88%;
+    --sidebar-ring: 265 65% 55%;
 
-    --chart-1: 261 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 265 65% 60%; /* Primary Purple */
+    --chart-2: 200 60% 55%; /* Blue */
+    --chart-3: 330 60% 65%; /* Pink/Magenta */
+    --chart-4: 160 50% 50%; /* Teal */
+    --chart-5: 30 70% 60%;  /* Orange */
   }
 
   .dark {
-    --background: 260 25% 10%; /* Dark background */
-    --foreground: 260 15% 85%; /* Light text for dark mode */
+    --background: 240 15% 10%; /* Dark cool gray */
+    --foreground: 240 10% 85%; /* Light gray text */
 
-    --muted: 260 20% 15%;
-    --muted-foreground: 260 10% 55%;
+    --muted: 240 15% 18%;
+    --muted-foreground: 240 10% 55%;
 
-    --popover: 260 25% 8%;
-    --popover-foreground: 260 15% 85%;
+    --popover: 240 15% 8%;
+    --popover-foreground: 240 10% 85%;
 
-    --card: 260 25% 8%;
-    --card-foreground: 260 15% 85%;
+    --card: 240 15% 12%;
+    --card-foreground: 240 10% 85%;
 
-    --border: 260 20% 20%;
-    --input: 260 20% 22%;
+    --border: 240 10% 25%;
+    --input: 240 10% 28%;
 
-    --primary: 261 33% 70%; /* Muted violet - consistent */
+    --primary: 265 65% 68%; /* Vibrant Purple for dark mode */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 261 100% 75%; /* Soft lavender - slightly adjusted for dark */
-    --secondary-foreground: 260 25% 15%;
+    --secondary: 265 50% 82%; /* Lighter purple for secondary elements in dark (e.g., progress track) */
+    --secondary-foreground: 265 50% 30%; 
 
-    --accent: 261 40% 68%;
+    --accent: 265 60% 60%;   /* Purple accent for dark mode */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 63% 40%;
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 261 33% 65%;
+    --ring: 265 65% 60%;
     
     /* Sidebar specific colors - dark mode */
-    --sidebar-background: 260 25% 12%;
-    --sidebar-foreground: 260 15% 85%;
-    --sidebar-primary: 261 33% 70%;
+    --sidebar-background: 240 15% 12%;
+    --sidebar-foreground: 240 10% 85%;
+    --sidebar-primary: 265 65% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 261 100% 75%;
-    --sidebar-accent-foreground: 260 25% 15%;
-    --sidebar-border: 260 20% 20%;
-    --sidebar-ring: 261 33% 65%;
+    --sidebar-accent: 265 50% 82%;
+    --sidebar-accent-foreground: 265 50% 30%;
+    --sidebar-border: 240 10% 25%;
+    --sidebar-ring: 265 65% 60%;
 
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 265 65% 70%; 
+    --chart-2: 200 60% 65%; 
+    --chart-3: 330 60% 75%; 
+    --chart-4: 160 50% 60%; 
+    --chart-5: 30 70% 70%;  
   }
 }
 
