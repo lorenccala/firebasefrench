@@ -101,23 +101,23 @@ export default function LinguaLeapPage() {
 
   useEffect(() => {
     audioRef.current = new Audio();
-    audioRef.current.playbackRate = playbackSpeedRef.current;
+    audioRef.current.playbackRate = playbackSpeed; // Set initial playback rate
 
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.removeAttribute('src');
-        audioRef.current.load();
+        // audioRef.current.load(); // Not strictly necessary before nullifying
         audioRef.current.oncanplaythrough = null;
         audioRef.current.onended = null;
         audioRef.current.onerror = null;
-        audioRef.current = null;
       }
+      audioRef.current = null;
       if (audioSequenceDelayTimeoutRef.current) {
         clearTimeout(audioSequenceDelayTimeoutRef.current);
       }
     };
-  }, []);
+  }, []); // Keep this empty
 
   useEffect(() => {
     if (studyMode === StudyMode.ActiveRecall && !isContinuousPlayingRef.current) {
@@ -218,7 +218,7 @@ export default function LinguaLeapPage() {
 
   const stopContinuousPlay = useCallback(() => {
     setIsContinuousPlaying(false);
-    isContinuousPlayingRef.current = false;
+    isContinuousPlayingRef.current = false; // Ensure ref is also updated
     stopAudio();
     continuousPlayCurrentIndexRef.current = 0;
     showNotification("continuousPlayStopped");
@@ -255,6 +255,7 @@ export default function LinguaLeapPage() {
     if (!isInitialLoading) applyChunkSettings();
   }, [selectedChunkNum, chunkSize, isInitialLoading, allSentences.length, applyChunkSettings]);
 
+
   const playAudioFile = useCallback((
     originalSrc: string,
     lang: 'fr' | 'en' | 'al',
@@ -278,10 +279,11 @@ export default function LinguaLeapPage() {
     if (pathUnderPublic.startsWith('/')) {
       pathUnderPublic = pathUnderPublic.substring(1);
     }
-    if (!pathUnderPublic.startsWith('data/')) {
-      pathUnderPublic = `data/${pathUnderPublic}`;
+    if (!pathUnderPublic.startsWith('data/')) { // Check if 'data/' prefix is missing
+        pathUnderPublic = `data/${pathUnderPublic}`; // Add 'data/' prefix
     }
-    const finalSrcPath = `/${pathUnderPublic}`;
+    const finalSrcPath = `/${pathUnderPublic}`; // Ensure leading slash for root-relative path
+
 
     console.log(`Attempting to play audio file (Play ID ${playId}): "${finalSrcPath}" [${lang}]`);
     audioRef.current.src = finalSrcPath;
@@ -293,6 +295,9 @@ export default function LinguaLeapPage() {
 
     audioRef.current.oncanplaythrough = () => {
       if (playRequestCounterRef.current === playId) {
+        if (audioRef.current) { // Defensive check
+          audioRef.current.playbackRate = playbackSpeedRef.current; // Ensure rate is set before play
+        }
         audioRef.current?.play().then(() => {
           if (playRequestCounterRef.current === playId) {
             setIsAudioPlaying(true);
@@ -346,8 +351,8 @@ export default function LinguaLeapPage() {
             errorMessage = 'Audio playback failed due to a corruption issue or unsupported features.';
             break;
           case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            errorMessage = `Audio source not supported or not found (Code: ${errorDetails.code}). ` +
-              `Ensure files are in 'public/data/' and paths in data.json are relative ` +
+            errorMessage = `The audio source for ${lang} (${finalSrcPath}) is not supported or couldn't be found. (Code: ${errorDetails.code}). ` +
+              `Ensure files are in 'public/data/' and paths in data.json are relative to 'data/' ` +
               `(e.g., 'audio/file.mp3' for 'public/data/audio/file.mp3').`;
             break;
           default:
@@ -355,16 +360,10 @@ export default function LinguaLeapPage() {
         }
       }
 
-      console.error(
-        "HTMLAudioElement.onerror - Event:", e,
-        "\nCode:", errorDetails?.code,
-        "\nMessage:", errorMessage,
-        `\nSrc: "${finalSrcPath}"`,
-        `\nLang: ${lang}`
-      );
+      console.error(`HTMLAudioElement.onerror - Code: ${errorDetails?.code}`, `Message: ${errorMessage}`, `Src: "${finalSrcPath}"`, `Lang: ${lang}`, e);
 
       showNotification("errorPlayingAudio", "destructive", {
-        source: `${lang} (${finalSrcPath}) - Error: ${errorMessage}`
+        source: `${lang} (${finalSrcPath}) - Error: ${errorDetails?.code || 'unknown'}`
       });
 
       if (playRequestCounterRef.current === playId) {
@@ -376,15 +375,18 @@ export default function LinguaLeapPage() {
     audioRef.current.load();
   }, [showNotification]);
 
+
   const playAudioSequence = useCallback(async (
     sentenceToPlay?: Sentence,
     isPartOfContinuousSequence: boolean = false
   ) => {
-    stopAudio();
-    const currentPlayId = playRequestCounterRef.current;
+    stopAudio(); // This now increments playRequestCounterRef
+    const currentPlayId = playRequestCounterRef.current; // Capture the NEW playId
 
+    // Short delay to allow any previous audio operations to fully stop and avoid race conditions
     await new Promise(resolve => setTimeout(resolve, 50));
 
+    // Check if this sequence request is still the active one after the delay
     if (playRequestCounterRef.current !== currentPlayId) {
       console.log(`Audio sequence ${currentPlayId} became stale before starting. Active: ${playRequestCounterRef.current}.`);
       return;
@@ -394,8 +396,8 @@ export default function LinguaLeapPage() {
     if (!sentence) {
       console.log(`PlayAudioSequence (ID ${currentPlayId}): No sentence to play.`);
       if (isPartOfContinuousSequence && isContinuousPlayingRef.current) {
-        setTimeout(() => {
-          if(playRequestCounterRef.current === currentPlayId) {
+         setTimeout(() => {
+          if(playRequestCounterRef.current === currentPlayId) { // Check again if still active
             handleSequenceEndLogicRef.current?.()
           }
         }, 50);
@@ -414,14 +416,14 @@ export default function LinguaLeapPage() {
     let secondaryLang: 'en' | 'al' | null = null;
 
     if (currentLanguageRef.current === 'al') {
-      primaryAudioSrc = sentence.audioSrcFr;
+      primaryAudioSrc = sentence.audioSrcFr; // French first
       primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcAl;
+      secondaryAudioSrc = sentence.audioSrcAl; // Then Albanian
       secondaryLang = 'al';
-    } else {
-      primaryAudioSrc = sentence.audioSrcFr;
+    } else { // English UI
+      primaryAudioSrc = sentence.audioSrcFr; // French first
       primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcEn;
+      secondaryAudioSrc = sentence.audioSrcEn; // Then English
       secondaryLang = 'en';
     }
 
@@ -468,7 +470,7 @@ export default function LinguaLeapPage() {
               setCurrentAudioSrcType(null);
               handleSequenceEndLogicRef.current?.();
             });
-          }, 500);
+          }, 500); // Delay between primary and secondary
         } else {
           console.log(`PlayAudioSequence (ID ${currentPlayId}): Primary ended, no secondary. Setting audio to not playing.`);
           setIsAudioPlaying(false);
@@ -479,7 +481,8 @@ export default function LinguaLeapPage() {
     };
 
     playPrimary();
-  }, [stopAudio, playAudioFile, currentChunkSentencesRef, currentSentenceIndexRef]);
+  }, [stopAudio, playAudioFile]);
+
 
   useEffect(() => {
     const handleSequenceEndLogicInternal = () => {
@@ -488,37 +491,41 @@ export default function LinguaLeapPage() {
 
       if (isLoopingRef.current && !isContinuousPlayingRef.current) {
         setTimeout(() => {
+          // Check if still the active play request and conditions still met
           if (playRequestCounterRef.current === currentTriggeringPlayId && isLoopingRef.current && !isContinuousPlayingRef.current) {
             console.log(`Looping: Replay for original playId ${currentTriggeringPlayId}. Calling playAudioSequence.`);
-            playAudioSequence();
+            playAudioSequence(); // This will generate a new playId internally
           } else {
             console.log(`Looping: Replay skipped. currentRef: ${playRequestCounterRef.current} vs trigger: ${currentTriggeringPlayId}, isLooping: ${isLoopingRef.current}, isContinuous: ${isContinuousPlayingRef.current}`);
           }
-        }, 200);
+        }, 200); // Delay before looping
       } else if (isContinuousPlayingRef.current) {
         const nextIndex = continuousPlayCurrentIndexRef.current + 1;
         if (nextIndex < currentChunkSentencesRef.current.length) {
           setCurrentSentenceIndex(nextIndex);
           continuousPlayCurrentIndexRef.current = nextIndex;
           setTimeout(() => {
-            if (playRequestCounterRef.current === currentTriggeringPlayId && isContinuousPlayingRef.current) {
+            // Check if still the active play request and conditions still met
+             if (playRequestCounterRef.current === currentTriggeringPlayId && isContinuousPlayingRef.current) {
               console.log(`Continuous: Next sentence for original playId ${currentTriggeringPlayId}. Calling playAudioSequence.`);
-              playAudioSequence(currentChunkSentencesRef.current[nextIndex], true);
+              playAudioSequence(currentChunkSentencesRef.current[nextIndex], true); // This will generate a new playId
             } else {
               console.log(`Continuous: Next sentence skipped. currentRef: ${playRequestCounterRef.current} vs trigger: ${currentTriggeringPlayId}, isContinuous: ${isContinuousPlayingRef.current}`);
             }
-          }, 200);
+          }, 200); // Delay before next sentence in continuous play
         } else {
           console.log("Continuous play: End of chunk reached.");
           stopContinuousPlay();
         }
       } else {
         console.log(`Sequence ended (not looping/continuous) for playId ${currentTriggeringPlayId}.`);
+        // No need to set isAudioPlaying false here, playAudioFile's onEnd or playAudioSequence will handle it
       }
     };
 
     handleSequenceEndLogicRef.current = handleSequenceEndLogicInternal;
 
+    // Cleanup timeout on component unmount or if dependencies change
     return () => {
       if (audioSequenceDelayTimeoutRef.current) {
         clearTimeout(audioSequenceDelayTimeoutRef.current);
@@ -526,28 +533,31 @@ export default function LinguaLeapPage() {
     };
   }, [playAudioSequence, stopContinuousPlay]);
 
-  const togglePlayPause = useCallback(() => {
-    if (isPlayButtonDisabled) return;
 
-    setIsPlayButtonDisabled(true);
+  const togglePlayPause = useCallback(() => {
+    if (isPlayButtonDisabled) return; // Prevent multiple rapid clicks
+
+    setIsPlayButtonDisabled(true); // Disable button immediately
 
     if (isAudioPlayingRef.current) {
       console.log("TogglePlayPause: Stopping audio.");
-      stopAudio();
-      if(isContinuousPlayingRef.current) {
-        stopContinuousPlay();
+      stopAudio(); // This will also stop continuous play if it's the source of audio
+      if(isContinuousPlayingRef.current) { // If it was continuous play, explicitly stop its mode
+          stopContinuousPlay();
       }
-      setIsPlayButtonDisabled(false);
+      setIsPlayButtonDisabled(false); // Re-enable button
     } else {
       if (currentChunkSentencesRef.current.length > 0) {
         console.log("TogglePlayPause: Starting audio sequence.");
+        // playAudioSequence is async due to the small delay, handle button disable/enable around it
         playAudioSequence().finally(() => setIsPlayButtonDisabled(false));
       } else {
         showNotification("noSentenceToPlay", "destructive");
-        setIsPlayButtonDisabled(false);
+        setIsPlayButtonDisabled(false); // Re-enable button
       }
     }
   }, [isPlayButtonDisabled, playAudioSequence, stopAudio, showNotification, stopContinuousPlay]);
+
 
   const handlePrevSentence = () => {
     if (isContinuousPlayingRef.current) stopContinuousPlay();
@@ -577,27 +587,29 @@ export default function LinguaLeapPage() {
     } else if (studyMode !== StudyMode.ActiveRecall) {
       setIsAnswerRevealed(true);
     }
+    // If continuous playing is active, answer should always be revealed.
     if (isContinuousPlayingRef.current) {
       setIsAnswerRevealed(true);
     }
-  }, [currentSentenceIndex, studyMode]);
+  }, [currentSentenceIndex, studyMode]); // Removed isContinuousPlaying from deps as it has its own logic for reveal
 
   const handleRevealAnswer = () => {
     setIsAnswerRevealed(true);
     const sentence = currentChunkSentencesRef.current[currentSentenceIndexRef.current];
-    if (!isAudioPlayingRef.current && sentence) {
-      playAudioSequence();
+    if (!isAudioPlayingRef.current && sentence) { // Only play if not already playing
+        playAudioSequence();
     }
   };
 
   const handlePlayAllChunkAudio = () => {
     if (currentChunkSentencesRef.current.length > 0) {
-      stopAudio();
+      stopAudio(); // Ensure any single play is stopped
       setIsContinuousPlaying(true);
-      isContinuousPlayingRef.current = true;
-      continuousPlayCurrentIndexRef.current = 0;
-      setCurrentSentenceIndex(0);
-      setIsAnswerRevealed(true);
+      isContinuousPlayingRef.current = true; // Set ref immediately
+      continuousPlayCurrentIndexRef.current = 0; // Start from the beginning of the chunk
+      setCurrentSentenceIndex(0); // Update main sentence index as well
+      setIsAnswerRevealed(true); // Answer should be revealed in continuous mode
+      // Use a small timeout to ensure state updates propagate and stopAudio completes
       setTimeout(() => playAudioSequence(currentChunkSentencesRef.current[0], true), 100);
       showNotification("startingContinuousPlay");
     } else {
@@ -623,19 +635,19 @@ export default function LinguaLeapPage() {
       </div>
     );
   }
-
+  
   const mainContentLayout = "mt-8 space-y-10 md:space-y-12";
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 font-sans bg-gradient-to-br from-blue-100 via-white to-purple-100">
       <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50">
         <Header language={currentLanguage} onLanguageChange={(lang) => {
-          stopAudio();
+          stopAudio(); // Stop audio when language changes
           setCurrentLanguage(lang);
         }} />
 
         <div className={mainContentLayout}>
-          <ControlsSection
+           <ControlsSection
             language={currentLanguage}
             studyMode={studyMode}
             onStudyModeChange={(newMode) => {
@@ -667,7 +679,8 @@ export default function LinguaLeapPage() {
               onToggleLoop: () => setIsLooping(prev => !prev),
               playbackSpeed: playbackSpeed,
               onPlaybackSpeedChange: (speed) => {
-                setPlaybackSpeed(speed);
+                setPlaybackSpeed(speed); // This updates the state
+                // The useEffect for playbackSpeed will update audioRef.current.playbackRate
               },
               disablePrev: currentSentenceIndex === 0,
               disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,
@@ -677,18 +690,18 @@ export default function LinguaLeapPage() {
               totalInChunk: currentChunkSentences.length,
               totalAll: allSentences.length,
             }}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} // Consider initial load with no data yet
             allSentencesCount={allSentences.length}
           />
           <ContinuousListeningSection
             language={currentLanguage}
             isPlaying={isContinuousPlaying}
             onPlayAll={handlePlayAllChunkAudio}
-            onStop={stopContinuousPlay}
+            onStop={stopContinuousPlay} // Pass the specific stop function for continuous play
             disabled={currentChunkSentences.length === 0 || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
-            currentSentenceIndex={isContinuousPlaying ? continuousPlayCurrentIndexRef.current : -1}
+            currentSentenceIndex={isContinuousPlaying ? continuousPlayCurrentIndexRef.current : -1} // Use ref for current index in continuous play
             totalSentencesInChunk={currentChunkSentences.length}
-            isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+            isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)} // Same loading condition
           />
           <NativeContentSwitchSection
             language={currentLanguage}
@@ -706,3 +719,5 @@ export default function LinguaLeapPage() {
     </div>
   );
 }
+
+    
