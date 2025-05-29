@@ -264,27 +264,36 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, openMobile, isMobile } = useSidebar();
 
   return (
     <Button
       ref={ref}
       data-sidebar="trigger"
-      variant="ghost"
+      // variant="ghost" // Removed to allow custom background
       size="icon"
-      className={cn("h-9 w-9", className)} // Increased button size
+      className={cn(
+        "h-9 w-9", // Increased button size
+        isMobile 
+          ? openMobile 
+            ? "bg-accent text-accent-foreground hover:bg-accent/90" // Orange when mobile sidebar is open
+            : "bg-primary text-primary-foreground hover:bg-primary/90" // Green when mobile sidebar is closed
+          : "bg-primary text-primary-foreground hover:bg-primary/90", // Default to green for desktop or non-mobile contexts
+        className
+      )}
       onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
+        onClick?.(event);
+        toggleSidebar();
       }}
       {...props}
     >
-      <Menu className="h-5 w-5" /> {/* Changed icon and explicitly sized it */}
+      <Menu className="h-5 w-5" /> {/* Explicitly sized icon */}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
-  )
-})
-SidebarTrigger.displayName = "SidebarTrigger"
+  );
+});
+SidebarTrigger.displayName = "SidebarTrigger";
+
 
 const SidebarRail = React.forwardRef<
   HTMLButtonElement,
