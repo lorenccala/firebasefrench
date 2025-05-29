@@ -98,24 +98,30 @@ export default function LinguaLeapPage() {
         setSpeechSynthesisVoices(voices);
         console.log("Speech synthesis voices loaded:", voices);
       } else {
-        console.warn("Speech synthesis voices array is empty.");
+        console.warn("Speech synthesis voices array is empty when loadVoices was called. Waiting for onvoiceschanged.");
       }
     };
     
-    // Attempt to load voices immediately
-    loadVoices();
-    
-    // Listen for changes in available voices
-    if (typeof window !== 'undefined' && window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+        const initialVoices = window.speechSynthesis.getVoices();
+        if (initialVoices.length > 0) {
+            loadVoices(); // Load immediately if already populated
+        }
+
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        } else {
+            console.warn("Browser does not support onvoiceschanged. Voice loading might be less reliable.");
+            // Fallback: try to load voices after a short delay if onvoiceschanged is not supported
+            setTimeout(loadVoices, 500);
+        }
     }
     
     return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = null;
-      }
-      // Cancel any ongoing speech synthesis when the component unmounts
       if (typeof window !== 'undefined' && window.speechSynthesis) {
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+          window.speechSynthesis.onvoiceschanged = null;
+        }
         window.speechSynthesis.cancel();
       }
     };
@@ -197,7 +203,7 @@ export default function LinguaLeapPage() {
   }, [allSentences, chunkSize, selectedChunkNum]);
 
   const stopAudio = useCallback(() => {
-    playRequestCounterRef.current++; // Invalidate previous/ongoing requests
+    playRequestCounterRef.current++; 
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       console.log(`Stopping audio. New playId counter: ${playRequestCounterRef.current}`);
       window.speechSynthesis.cancel();
@@ -212,7 +218,7 @@ export default function LinguaLeapPage() {
 
   const stopContinuousPlay = useCallback(() => {
     setIsContinuousPlaying(false);
-    isContinuousPlayingRef.current = false; // Ensure ref is updated immediately
+    isContinuousPlayingRef.current = false; 
     stopAudio();
     continuousPlayCurrentIndexRef.current = 0;
     showNotification("continuousPlayStopped");
@@ -253,25 +259,49 @@ export default function LinguaLeapPage() {
 
   const getVoiceForLang = useCallback((targetLang: 'fr' | 'en' | 'al'): SpeechSynthesisVoice | undefined => {
     if (!speechSynthesisVoices || speechSynthesisVoices.length === 0) {
-      console.warn("TTS voices not available or not loaded yet for getVoiceForLang.");
-      // Attempt to get them now, though this might be too late if called mid-render
-      const currentVoices = window.speechSynthesis.getVoices();
+      console.warn("TTS voices not available or not loaded yet for getVoiceForLang. Attempting to refresh.");
+      const currentVoices = typeof window !== 'undefined' ? window.speechSynthesis.getVoices() : [];
       if (currentVoices.length > 0) {
-        setSpeechSynthesisVoices(currentVoices); // This will trigger a re-render, be careful
-        // Re-check with the potentially updated voices
-        if (currentVoices.length === 0) return undefined;
+        setSpeechSynthesisVoices(currentVoices); // This will trigger a re-render.
+        // Re-check with the potentially updated voices immediately for this call
+        if (currentVoices.length === 0) {
+          console.warn("Still no voices after immediate refresh in getVoiceForLang.");
+          return undefined;
+        }
+        // If voices were loaded, use them for the current logic, otherwise fall through.
+        // This re-assignment is local to this call if setSpeechSynthesisVoices is async.
+        // The subsequent logic will use `currentVoices` if `speechSynthesisVoices` was empty.
+        const voicesToSearch = currentVoices; 
+        let langCodePrefix = '';
+        let fullLangCode = '';
+        let langVariations: string[] = [];
+
+        if (targetLang === 'fr') { langCodePrefix = 'fr'; fullLangCode = 'fr-FR'; langVariations = ['fr-CA', 'fr-BE', 'fr-CH']; }
+        else if (targetLang === 'en') { langCodePrefix = 'en'; fullLangCode = 'en-US'; langVariations = ['en-GB', 'en-AU', 'en-CA']; }
+        else if (targetLang === 'al') { langCodePrefix = 'sq'; fullLangCode = 'sq-AL'; langVariations = []; }
+
+        let voice = voicesToSearch.find(v => v.lang === fullLangCode);
+        if (voice) return voice;
+        for (const variation of langVariations) { voice = voicesToSearch.find(v => v.lang === variation); if (voice) return voice; }
+        voice = voicesToSearch.find(v => v.lang.startsWith(langCodePrefix + '-')); if (voice) return voice;
+        voice = voicesToSearch.find(v => v.lang === langCodePrefix); if (voice) return voice;
+        console.warn(`No specific voice found for language (after refresh): ${targetLang}. Browser default will be used.`);
+        return undefined;
+
       } else {
+        console.warn("No voices found even after immediate refresh in getVoiceForLang.");
         return undefined;
       }
     }
 
+    // Normal path if speechSynthesisVoices is already populated
     let langCodePrefix = '';
     let fullLangCode = '';
     let langVariations: string[] = [];
 
     if (targetLang === 'fr') { langCodePrefix = 'fr'; fullLangCode = 'fr-FR'; langVariations = ['fr-CA', 'fr-BE', 'fr-CH']; }
     else if (targetLang === 'en') { langCodePrefix = 'en'; fullLangCode = 'en-US'; langVariations = ['en-GB', 'en-AU', 'en-CA']; }
-    else if (targetLang === 'al') { langCodePrefix = 'sq'; fullLangCode = 'sq-AL'; langVariations = []; } // Assuming 'sq-AL' for Albanian
+    else if (targetLang === 'al') { langCodePrefix = 'sq'; fullLangCode = 'sq-AL'; langVariations = []; }
 
     let voice = speechSynthesisVoices.find(v => v.lang === fullLangCode);
     if (voice) return voice;
@@ -294,26 +324,23 @@ export default function LinguaLeapPage() {
 
 const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: number, onEndCallback: () => void) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
-        console.log("Speech synthesis not available.");
+        console.warn("Speech synthesis not available.");
         setIsAudioPlaying(false);
         setCurrentAudioSrcType(null);
-        // Do not call onEndCallback if synth is not available, let the sequence halt.
         return;
     }
 
     if (speechSynthesisVoices.length === 0) {
         showNotification("ttsVoicesNotReady", "destructive");
-        console.warn("playTTS called but no voices loaded.");
+        console.warn("playTTS called but no voices loaded. Consider waiting for onvoiceschanged or refreshing voices.");
         setIsAudioPlaying(false);
         setCurrentAudioSrcType(null);
-        // Do not call onEndCallback if voices aren't ready.
         return;
     }
 
-    // If this specific play request ID is no longer the active one, abort.
     if (playRequestCounterRef.current !== playId) {
         console.log(`TTS playId ${playId} for "${text.substring(0, 20)}..." [${lang}] is stale. Active playId: ${playRequestCounterRef.current}. Aborting speak.`);
-        return; // Do not proceed with speaking this stale request. Don't call onEndCallback.
+        return;
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -321,7 +348,7 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
 
     if (voice) {
         utterance.voice = voice;
-        console.log(`Using voice: ${voice.name} for lang ${lang}`);
+        console.log(`Using voice: ${voice.name} (lang: ${voice.lang}) for target language ${lang}`);
     } else {
         console.warn(`No specific voice found for ${lang}. Browser default will be used if available.`);
     }
@@ -347,17 +374,30 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
         }
     };
 
-    utterance.onerror = (event) => {
-        console.error('SpeechSynthesisUtterance.onerror', event, `Text: "${text.substring(0, 20)}..."`, `Lang: ${lang}`);
-        showNotification("errorPlayingAudio", "destructive", { source: `TTS for ${lang} (${event.error || 'unknown error'})` });
+    utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
+        const errorCode = event.error;
+        console.error(
+            `SpeechSynthesisUtterance.onerror - Code: ${errorCode}`,
+            `Text: "${text.substring(0, 20)}..."`,
+            `Lang: ${lang}`,
+            'Utterance details:', { 
+                voice: utterance.voice ? utterance.voice.name : 'default', 
+                lang: utterance.lang, 
+                rate: utterance.rate, 
+                textLength: utterance.text.length 
+            },
+            'Full Event Object:', event
+        );
+        showNotification("errorPlayingAudio", "destructive", { 
+            source: `TTS for ${lang} (Error: ${errorCode || 'unknown error'})` 
+        });
         if (playRequestCounterRef.current === playId) {
             setIsAudioPlaying(false);
             setCurrentAudioSrcType(null);
-            onEndCallback(); // Allow sequence to attempt to continue or terminate
+            onEndCallback(); 
         }
     };
 
-    // Before speaking, one final check
     if (playRequestCounterRef.current !== playId) {
         console.log(`TTS playId ${playId} for "${text.substring(0, 20)}..." [${lang}] is stale just before speak. Active playId: ${playRequestCounterRef.current}. Aborting.`);
         return;
@@ -373,10 +413,9 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
     sentenceToPlay?: Sentence,
     isPartOfContinuousSequence: boolean = false
   ) => {
-    stopAudio(); // This increments playRequestCounterRef.current and cancels any ongoing speech.
-    const currentPlayId = playRequestCounterRef.current; // This is the ID for this new play attempt.
+    stopAudio(); 
+    const currentPlayId = playRequestCounterRef.current; 
 
-    // Short delay to allow `speechSynthesis.cancel()` to fully process.
     await new Promise(resolve => setTimeout(resolve, 50));
 
     if (playRequestCounterRef.current !== currentPlayId) {
@@ -388,14 +427,12 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
     if (!sentence) {
       console.log(`PlayAudioSequence (ID ${currentPlayId}): No sentence to play.`);
       if (isPartOfContinuousSequence && isContinuousPlayingRef.current) {
-        // If continuous play was meant to run but no sentence, end it.
         setTimeout(() => {
-          if(playRequestCounterRef.current === currentPlayId) { // Ensure this ID is still active
+          if(playRequestCounterRef.current === currentPlayId) { 
              handleSequenceEndLogicRef.current?.()
           }
         }, 50);
       } else {
-        // For single play, if no sentence, ensure audio state is reset. stopAudio() should handle this.
         setIsAudioPlaying(false);
         setCurrentAudioSrcType(null);
       }
@@ -406,13 +443,13 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
 
     let primaryText: string;
     let primaryLang: 'fr' | 'al';
-    let secondaryText: string | null = null; // Initialize to null
-    let secondaryLang: 'en' | 'al' | null = null; // Initialize to null
+    let secondaryText: string | null = null; 
+    let secondaryLang: 'en' | 'al' | null = null; 
 
     if (currentLanguageRef.current === 'al') {
-      primaryText = sentence.french;
+      primaryText = sentence.french; // French first
       primaryLang = 'fr';
-      secondaryText = sentence.albanianSentence;
+      secondaryText = sentence.albanianSentence; // Albanian second
       secondaryLang = 'al';
     } else { // Default to English UI: French first, English second
       primaryText = sentence.french;
@@ -424,7 +461,6 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
     const playPrimary = () => {
       console.log(`PlayAudioSequence (ID ${currentPlayId}): Playing primary - ${primaryLang}`);
       playTTS(primaryText, primaryLang, currentPlayId, () => {
-        // This is the onEndCallback for the primary TTS
         if (playRequestCounterRef.current !== currentPlayId) {
             console.log(`PlayAudioSequence (ID ${currentPlayId}): Primary TTS ended but sequence is stale. Not playing secondary.`);
             return;
@@ -437,8 +473,7 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
                 return;
             }
             console.log(`PlayAudioSequence (ID ${currentPlayId}): Playing secondary - ${secondaryLang}`);
-            playTTS(secondaryText, secondaryLang, currentPlayId, () => {
-              // This is the onEndCallback for the secondary TTS
+            playTTS(secondaryText!, secondaryLang!, currentPlayId, () => {
               if (playRequestCounterRef.current !== currentPlayId) {
                 console.log(`PlayAudioSequence (ID ${currentPlayId}): Secondary TTS ended but sequence is stale.`);
                 return;
@@ -448,9 +483,8 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
               setCurrentAudioSrcType(null);
               handleSequenceEndLogicRef.current?.();
             });
-          }, 500); // Delay between primary and secondary
+          }, 500); 
         } else {
-          // No secondary text, sequence ends after primary
           console.log(`PlayAudioSequence (ID ${currentPlayId}): Primary ended, no secondary. Setting audio to not playing.`);
           setIsAudioPlaying(false);
           setCurrentAudioSrcType(null);
@@ -461,27 +495,27 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
 
     playPrimary();
 
-  }, [stopAudio, playTTS, currentLanguageRef, currentChunkSentencesRef, currentSentenceIndexRef]);
+  }, [stopAudio, playTTS, currentChunkSentencesRef, currentSentenceIndexRef]);
 
 
   useEffect(() => {
     const handleSequenceEndLogicInternal = () => {
-      const currentTriggeringPlayId = playRequestCounterRef.current; // ID that led to this sequence end
+      const currentTriggeringPlayId = playRequestCounterRef.current; 
       console.log(`handleSequenceEndLogicInternal called, triggered by playId completion related to ${currentTriggeringPlayId}`);
 
       if (isLoopingRef.current && !isContinuousPlayingRef.current) {
         setTimeout(() => {
           if (playRequestCounterRef.current === currentTriggeringPlayId && isLoopingRef.current && !isContinuousPlayingRef.current) {
             console.log(`Looping: Replay for original playId ${currentTriggeringPlayId}. Calling playAudioSequence.`);
-            playAudioSequence(); // This will generate a new playId.
+            playAudioSequence(); 
           } else {
-             console.log(`Looping: Replay skipped. currentRef: ${playRequestCounterRef.current} vs trigger: ${currentTriggeringPlayId}, isLooping: ${isLoopingRef.current}`);
+             console.log(`Looping: Replay skipped. currentRef: ${playRequestCounterRef.current} vs trigger: ${currentTriggeringPlayId}, isLooping: ${isLoopingRef.current}, isContinuous: ${isContinuousPlayingRef.current}`);
           }
         }, 200);
       } else if (isContinuousPlayingRef.current) {
         const nextIndex = continuousPlayCurrentIndexRef.current + 1;
         if (nextIndex < currentChunkSentencesRef.current.length) {
-          setCurrentSentenceIndex(nextIndex); // Update UI immediately
+          setCurrentSentenceIndex(nextIndex); 
           continuousPlayCurrentIndexRef.current = nextIndex;
           setTimeout(() => {
             if (playRequestCounterRef.current === currentTriggeringPlayId && isContinuousPlayingRef.current) {
@@ -496,10 +530,7 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
           stopContinuousPlay();
         }
       } else {
-        // Normal end of single play, or loop/continuous was turned off.
-        // isAudioPlaying and currentAudioSrcType are already reset by the final playTTS callback.
         console.log(`Sequence ended (not looping/continuous) for playId ${currentTriggeringPlayId}.`);
-        // No need to set isAudioPlaying false here, it's done by the playTTS chain.
       }
     };
 
@@ -521,7 +552,6 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
       console.log("TogglePlayPause: Stopping audio.");
       stopAudio();
       if(isContinuousPlayingRef.current) {
-        // If it was continuous play, user pausing should stop it fully.
         stopContinuousPlay();
       }
     } else {
@@ -536,7 +566,7 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
 
 
   const handlePrevSentence = () => {
-    if (isContinuousPlayingRef.current) stopContinuousPlay(); // Stop continuous if navigating manually
+    if (isContinuousPlayingRef.current) stopContinuousPlay(); 
     else stopAudio();
 
     if (currentSentenceIndexRef.current > 0) {
@@ -547,7 +577,7 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
   };
 
   const handleNextSentence = () => {
-     if (isContinuousPlayingRef.current) stopContinuousPlay(); // Stop continuous if navigating manually
+     if (isContinuousPlayingRef.current) stopContinuousPlay(); 
      else stopAudio();
 
     if (currentSentenceIndexRef.current < currentChunkSentencesRef.current.length - 1) {
@@ -563,30 +593,28 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
     } else if (studyMode !== StudyMode.ActiveRecall) {
       setIsAnswerRevealed(true);
     }
-    // If continuous play starts, answer should be revealed.
     if (isContinuousPlayingRef.current) {
         setIsAnswerRevealed(true);
     }
-  }, [currentSentenceIndex, studyMode]); // Removed isContinuousPlaying from deps to avoid loop, handle it in start/stop
+  }, [currentSentenceIndex, studyMode]); 
 
 
   const handleRevealAnswer = () => {
     setIsAnswerRevealed(true);
     const sentence = currentChunkSentencesRef.current[currentSentenceIndexRef.current];
     if (!isAudioPlayingRef.current && sentence) {
-      playAudioSequence(); // Play audio when answer is revealed (if not already playing)
+      playAudioSequence(); 
     }
   };
 
   const handlePlayAllChunkAudio = () => {
     if (currentChunkSentencesRef.current.length > 0) {
-      stopAudio(); // Ensure any single play is stopped
+      stopAudio(); 
       setIsContinuousPlaying(true);
-      isContinuousPlayingRef.current = true; // Update ref immediately
+      isContinuousPlayingRef.current = true; 
       continuousPlayCurrentIndexRef.current = 0;
-      setCurrentSentenceIndex(0); // Start from the beginning
-      setIsAnswerRevealed(true); // Reveal answers during continuous play
-      // A short delay before starting the sequence to allow state updates
+      setCurrentSentenceIndex(0); 
+      setIsAnswerRevealed(true); 
       setTimeout(() => playAudioSequence(currentChunkSentencesRef.current[0], true), 100);
       showNotification("startingContinuousPlay");
     } else {
@@ -657,8 +685,6 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
               playbackSpeed: playbackSpeed,
               onPlaybackSpeedChange: (speed) => {
                 setPlaybackSpeed(speed);
-                // If audio is playing, stop and restart with new speed (optional)
-                // For simplicity, new speed will apply to next playback.
               },
               disablePrev: currentSentenceIndex === 0,
               disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,
@@ -697,3 +723,4 @@ const playTTS = useCallback((text: string, lang: 'fr' | 'en' | 'al', playId: num
     </div>
   );
 }
+
