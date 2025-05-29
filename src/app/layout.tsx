@@ -4,7 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'LinguaLeap',
+  title: 'ProntoLingo',
   description: 'AI-Powered Language Learning App',
 };
 

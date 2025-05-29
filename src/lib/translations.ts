@@ -2,7 +2,7 @@
 export type Language = 'en' | 'al';
 
 export const translations = {
-  appTitle: { en: "LinguaLeap", al: "LinguaLeap" },
+  appTitle: { en: "ProntoLingo", al: "ProntoLingo" },
   appSubtitle: { en: "Your AI-Powered Companion for Language Mastery", al: "Partneri Juaj i Mundësuar nga AI për Mjeshtërinë e Gjuhës" },
   studyConfigurationTitle: { en: "Study Configuration", al: "Konfigurimi i Studimit" },
   studyConfigurationDescription: { en: "Customize your learning session. Total sentences available: {count}.", al: "Personalizoni sesionin tuaj të mësimit. Numri total i fjalive në dispozicion: {count}." },
@@ -48,7 +48,7 @@ export const translations = {
   sessionCompleteDescription: { en: "Great job focusing! Now is a good time to immerse yourself in native French content like movies, music, or podcasts to solidify your learning.", al: "Punë e shkëlqyer përqendrimi! Tani është një kohë e mirë për t'u zhytur në përmbajtje amtare franceze si filma, muzikë, ose podkaste për të forcuar mësimin tuaj." },
   dismissButton: { en: "Dismiss", al: "Anulo" },
   findNativeContentButton: { en: "Find Native Content", al: "Gjej Përmbajtje Amtare" },
-  footerCopyright: { en: "&copy; {year} LinguaLeap. All rights reserved.", al: "&copy; {year} LinguaLeap. Të gjitha të drejtat e rezervuara." },
+  footerCopyright: { en: "&copy; {year} ProntoLingo. All rights reserved.", al: "&copy; {year} ProntoLingo. Të gjitha të drejtat e rezervuara." },
   footerCraftedWithAi: { en: "Crafted with AI for language learners.", al: "Krijuar me AI për nxënësit e gjuhëve." },
   errorTitle: { en: "Error", al: "Gabim" },
   notificationTitle: { en: "Notification", al: "Njoftim" },
@@ -105,6 +105,7 @@ export const translations = {
   sidebarFlashcards: { en: "Flashcards", al: "Kartelet" },
   sidebarSentenceBuilder: { en: "Sentence Builder", al: "Ndërtuesi" },
   sidebarFocusTimer: { en: "Focus Timer", al: "Kohëmatësi" },
+  sidebarGrammarExplanation: { en: "Grammar AI", al: "Gramatika AI" },
 };
 
     

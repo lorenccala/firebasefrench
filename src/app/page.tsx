@@ -48,7 +48,7 @@ interface RawSentenceDataFromFile {
 
 type ActiveSection = 'config' | 'study' | 'flashcards' | 'builder' | 'timer' | 'grammar';
 
-export default function LinguaLeapPage() {
+export default function ProntoLingoPage() {
   const [allSentences, setAllSentences] = useState<Sentence[]>([]);
   const [currentChunkSentences, setCurrentChunkSentences] = useState<Sentence[]>([]);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState<number>(0);
@@ -448,18 +448,17 @@ export default function LinguaLeapPage() {
     console.log(`PlayAudioSequence (ID ${currentPlayId}): Starting for sentence ID ${sentence.id}`);
 
     let primaryAudioSrc: string | undefined;
-    let primaryLang: 'fr' | 'al';
+    let primaryLang: 'fr'; // Always French first
     let secondaryAudioSrc: string | undefined;
-    let secondaryLang: 'en' | 'al' | 'fr' | null = null;
+    let secondaryLang: 'en' | 'al' | null = null;
+
+    primaryAudioSrc = sentence.audioSrcFr;
+    primaryLang = 'fr';
 
     if (currentLanguage === 'al') {
-      primaryAudioSrc = sentence.audioSrcFr; 
-      primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcAl; 
+      secondaryAudioSrc = sentence.audioSrcAl;
       secondaryLang = 'al';
-    } else { 
-      primaryAudioSrc = sentence.audioSrcFr;
-      primaryLang = 'fr';
+    } else { // Default to English for secondary if UI is not Albanian
       secondaryAudioSrc = sentence.audioSrcEn;
       secondaryLang = 'en';
     }
