@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import type { Sentence, StudyMode } from '@/types';
+import { type Sentence, StudyMode } from '@/types'; // Added StudyMode import
 import { PLAYBACK_SPEEDS } from '@/lib/constants';
 import { LoadingSpinner } from './LoadingSpinner';
 import GrammarExplainer from './GrammarExplainer';
