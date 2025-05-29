@@ -100,15 +100,13 @@ export default function LinguaLeapPage() {
   useEffect(() => { currentLanguageRef.current = currentLanguage; }, [currentLanguage]);
 
   useEffect(() => {
-    // Create audio element on mount
     audioRef.current = new Audio();
     audioRef.current.playbackRate = playbackSpeedRef.current;
 
     return () => {
-      // Cleanup audio element on unmount
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = ''; // Release resources
+        audioRef.current.src = '';
         audioRef.current = null;
       }
       if (audioSequenceDelayTimeoutRef.current) {
@@ -199,7 +197,9 @@ export default function LinguaLeapPage() {
     playRequestCounterRef.current++; 
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.src = ''; // Clear source to stop loading/playing
+      audioRef.current.removeAttribute('src'); // Use removeAttribute instead of setting src to ''
+      audioRef.current.load(); // Call load to ensure the current source is aborted.
+      
       // Remove event listeners to prevent them from firing for stale requests
       audioRef.current.oncanplaythrough = null;
       audioRef.current.onended = null;
@@ -265,7 +265,7 @@ export default function LinguaLeapPage() {
       console.warn("Audio element not ready.");
       setIsAudioPlaying(false);
       setCurrentAudioSrcType(null);
-      if (playRequestCounterRef.current === playId) onEndCallback(); // Still call callback to not break sequence
+      if (playRequestCounterRef.current === playId) onEndCallback();
       return;
     }
 
@@ -273,12 +273,12 @@ export default function LinguaLeapPage() {
       console.log(`Audio file playId ${playId} for "${src}" [${lang}] is stale. Active playId: ${playRequestCounterRef.current}. Aborting play.`);
       return;
     }
-
-    console.log(`Attempting to play audio file (Play ID ${playId}): "${src}" [${lang}]`);
-    audioRef.current.src = src;
+    
+    const formattedSrc = src.startsWith('/') ? src : `/${src}`;
+    console.log(`Attempting to play audio file (Play ID ${playId}): "${formattedSrc}" [${lang}]`);
+    audioRef.current.src = formattedSrc;
     audioRef.current.playbackRate = playbackSpeedRef.current;
 
-    // Remove previous listeners before adding new ones
     audioRef.current.oncanplaythrough = null;
     audioRef.current.onended = null;
     audioRef.current.onerror = null;
@@ -289,11 +289,11 @@ export default function LinguaLeapPage() {
           if (playRequestCounterRef.current === playId) {
             setIsAudioPlaying(true);
             setCurrentAudioSrcType(lang);
-            console.log(`Audio playing (Play ID ${playId}): "${src}" [${lang}]`);
+            console.log(`Audio playing (Play ID ${playId}): "${formattedSrc}" [${lang}]`);
           }
         }).catch(error => {
-          console.error(`Error playing audio "${src}" (Play ID ${playId}):`, error);
-          showNotification("errorPlayingAudio", "destructive", { source: `${lang} (${src}) - Playback error` });
+          console.error(`Error playing audio "${formattedSrc}" (Play ID ${playId}):`, error);
+          showNotification("errorPlayingAudio", "destructive", { source: `${lang} (${formattedSrc}) - Playback error` });
           if (playRequestCounterRef.current === playId) {
             setIsAudioPlaying(false);
             setCurrentAudioSrcType(null);
@@ -301,16 +301,16 @@ export default function LinguaLeapPage() {
           }
         });
       } else {
-        console.log(`Audio file oncanplaythrough: playId ${playId} for "${src}" is stale. Aborting actual play.`);
+        console.log(`Audio file oncanplaythrough: playId ${playId} for "${formattedSrc}" is stale. Aborting actual play.`);
       }
     };
 
     audioRef.current.onended = () => {
-      console.log(`Audio file ended (Play ID ${playId}): "${src}"`);
+      console.log(`Audio file ended (Play ID ${playId}): "${formattedSrc}"`);
       if (playRequestCounterRef.current === playId) {
         onEndCallback();
       } else {
-         console.log(`Audio file onended: playId ${playId} for "${src}" is stale. Not calling onEndCallback.`);
+         console.log(`Audio file onended: playId ${playId} for "${formattedSrc}" is stale. Not calling onEndCallback.`);
       }
     };
 
@@ -330,15 +330,15 @@ export default function LinguaLeapPage() {
             errorMessage = 'The audio playback was aborted due to a corruption problem or because the audio used features your browser did not support.';
             break;
           case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            errorMessage = `The audio source for ${lang} (${src}) is not supported or couldn't be found. (Code: ${errorDetails.code})`;
+            errorMessage = `The audio source for ${lang} (${formattedSrc}) is not supported or couldn't be found. (Code: ${errorDetails.code})`;
             break;
           default:
             errorMessage = `An unknown error occurred (Code: ${errorDetails.code}).`;
         }
       }
-      console.error(`HTMLAudioElement.onerror - Code: ${errorDetails?.code}`, `Message: ${errorMessage}`, `Src: "${src}"`, `Lang: ${lang}`, e);
+      console.error(`HTMLAudioElement.onerror - Code: ${errorDetails?.code}`, `Message: ${errorMessage}`, `Src: "${formattedSrc}"`, `Lang: ${lang}`, e);
       showNotification("errorPlayingAudio", "destructive", { 
-          source: `${lang} (${src}) - Error: ${errorDetails?.code || 'unknown'}` 
+          source: `${lang} (${formattedSrc}) - Error: ${errorDetails?.code || 'unknown'}` 
       });
       if (playRequestCounterRef.current === playId) {
         setIsAudioPlaying(false);
@@ -347,7 +347,7 @@ export default function LinguaLeapPage() {
       }
     };
 
-    audioRef.current.load(); // Important: call load() after setting src and event listeners
+    audioRef.current.load();
 
   }, [showNotification]);
 
@@ -359,7 +359,7 @@ export default function LinguaLeapPage() {
     stopAudio(); 
     const currentPlayId = playRequestCounterRef.current; 
 
-    await new Promise(resolve => setTimeout(resolve, 50)); // Small delay to ensure stopAudio completes
+    await new Promise(resolve => setTimeout(resolve, 50)); 
 
     if (playRequestCounterRef.current !== currentPlayId) {
       console.log(`Audio sequence ${currentPlayId} became stale before starting. Active: ${playRequestCounterRef.current}.`);
@@ -389,22 +389,23 @@ export default function LinguaLeapPage() {
     let secondaryAudioSrc: string | undefined;
     let secondaryLang: 'en' | 'al' | null = null;
 
+    // Determine audio sources based on UI language
     if (currentLanguageRef.current === 'al') {
-      primaryAudioSrc = sentence.audioSrcFr;
+      primaryAudioSrc = sentence.audioSrcFr; // French first
       primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcAl;
+      secondaryAudioSrc = sentence.audioSrcAl; // Then Albanian
       secondaryLang = 'al';
     } else { // Default to English UI
-      primaryAudioSrc = sentence.audioSrcFr;
+      primaryAudioSrc = sentence.audioSrcFr; // French first
       primaryLang = 'fr';
-      secondaryAudioSrc = sentence.audioSrcEn;
+      secondaryAudioSrc = sentence.audioSrcEn; // Then English
       secondaryLang = 'en';
     }
-
+    
     const playPrimary = () => {
       if (!primaryAudioSrc) {
         console.log(`PlayAudioSequence (ID ${currentPlayId}): No primary audio source for ${primaryLang}.`);
-        if (secondaryAudioSrc && secondaryLang) { // Try playing secondary if primary is missing
+        if (secondaryAudioSrc && secondaryLang) {
            console.log(`PlayAudioSequence (ID ${currentPlayId}): Attempting to play secondary audio directly - ${secondaryLang}`);
            playAudioFile(secondaryAudioSrc, secondaryLang, currentPlayId, () => {
               if (playRequestCounterRef.current !== currentPlayId) return;
@@ -497,8 +498,6 @@ export default function LinguaLeapPage() {
 
     handleSequenceEndLogicRef.current = handleSequenceEndLogicInternal;
 
-    // No explicit cleanup for audioRef event listeners here as they are managed by playAudioFile
-    // and stopAudio. The audio element itself is cleaned up in the main useEffect.
     return () => {
       if (audioSequenceDelayTimeoutRef.current) {
         clearTimeout(audioSequenceDelayTimeoutRef.current);
