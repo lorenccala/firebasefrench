@@ -549,8 +549,8 @@ export default function LinguaLeapPage() {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="w-full max-w-3xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8 font-sans bg-gradient-to-br from-blue-100 via-white to-purple-100">
+      <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Header />
         <main className="mt-8 space-y-10 md:space-y-12">
           <ControlsSection

@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import {
-  Play, Pause, SkipBack, SkipForward, RotateCcw, Eye, Info, Edit3, BookOpenText
+  Play, Pause, SkipBack, SkipForward, RotateCcw, Eye, Info, Edit3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { type Sentence, StudyMode } from '@/types'; 
+import { type Sentence, StudyMode } from '@/types';
 import { PLAYBACK_SPEEDS } from '@/lib/constants';
 import { LoadingSpinner } from './LoadingSpinner';
 import GrammarExplainer from './GrammarExplainer';
@@ -100,7 +100,7 @@ const StudyArea: FC<StudyAreaProps> = ({
         </Card>
      );
   }
-  
+
   if (!sentence && sentenceCounter.totalInChunk === 0 && !isLoading) {
     return (
         <Card className="shadow-lg">
@@ -123,7 +123,6 @@ const StudyArea: FC<StudyAreaProps> = ({
     );
   }
 
-
   const progressPercentage = sentenceCounter.totalInChunk > 0 ? (sentenceCounter.currentNum / sentenceCounter.totalInChunk) * 100 : 0;
 
   return (
@@ -139,8 +138,8 @@ const StudyArea: FC<StudyAreaProps> = ({
       </CardHeader>
       <CardContent className="space-y-6">
         {sentence ? (
-          <>
-            <div className="p-6 rounded-lg bg-muted/50 min-h-[160px] flex flex-col justify-center">
+          <div className="p-6 rounded-lg bg-muted/50 min-h-[160px] flex flex-col justify-center shadow-inner">
+            <div className="min-h-[100px] mb-4 flex flex-col justify-center">
               { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && sentence.verbFrench && sentence.verbEnglish && (
                 <div className="mb-3 text-center">
                   <p className="text-sm text-muted-foreground" data-ai-hint="verb conjugation">
@@ -151,15 +150,15 @@ const StudyArea: FC<StudyAreaProps> = ({
               <p className="text-2xl font-semibold text-primary-foreground bg-primary p-3 rounded-md shadow text-center" data-ai-hint="foreign language text">
                 {sentence.french}
               </p>
-              {studyMode === StudyMode.ActiveRecall && !isAnswerRevealed && (
-                <Button onClick={onRevealAnswer} className="mt-4 mx-auto bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                  <Eye className="mr-2 h-4 w-4" /> Reveal Answer
-                </Button>
-              )}
               {(isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && (
                  <p className="text-lg text-muted-foreground mt-3 text-center pt-2" data-ai-hint="english translation text">
                   {sentence.english}
                 </p>
+              )}
+              {studyMode === StudyMode.ActiveRecall && !isAnswerRevealed && (
+                <Button onClick={onRevealAnswer} className="mt-4 mx-auto bg-secondary hover:bg-secondary/90 text-secondary-foreground">
+                  <Eye className="mr-2 h-4 w-4" /> Reveal Answer
+                </Button>
               )}
             </div>
 
@@ -179,7 +178,7 @@ const StudyArea: FC<StudyAreaProps> = ({
                     <RotateCcw className={`h-5 w-5 ${audioControls.isLooping ? 'text-primary' : ''}`} />
                   </Button>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Label htmlFor="playback-speed" className="text-sm whitespace-nowrap">Speed:</Label>
                   <Select
@@ -199,7 +198,7 @@ const StudyArea: FC<StudyAreaProps> = ({
                   </Select>
                 </div>
               </div>
-              
+
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
                   Sentence {sentenceCounter.currentNum} of {sentenceCounter.totalInChunk} in chunk
@@ -207,13 +206,13 @@ const StudyArea: FC<StudyAreaProps> = ({
                 <Progress value={progressPercentage} className="w-full h-2 mt-1" />
               </div>
             </div>
-          </>
+          </div>
         ) : (
             <Alert variant="default" className="bg-secondary/30">
                 <Info className="h-4 w-4" />
                 <AlertTitle>No Sentence Selected</AlertTitle>
                 <AlertDescription>
-                Load a chunk to begin your study session.
+                Load a chunk to begin your study session or the current chunk might be empty.
                 </AlertDescription>
             </Alert>
         )}
