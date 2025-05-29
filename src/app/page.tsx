@@ -21,9 +21,9 @@ import { AlertCircle } from 'lucide-react';
 interface RawSentenceData {
   id: string;
   verb: string;
-  targetSentence: string;
+  targetSentence: string; // French sentence
   verbEnglish: string;
-  englishSentence: string;
+  englishSentence: string; // English sentence
   verbAlbanian: string;
   albanianSentence: string;
   audioSrcEn?: string;
@@ -118,9 +118,9 @@ export default function LinguaLeapPage() {
         setAllSentences([]);
       } else {
         const transformedSentences: Sentence[] = rawData.map(item => ({
-          id: parseInt(item.id, 10),
-          french: item.targetSentence,
-          english: item.englishSentence,
+          id: parseInt(item.id, 10), // Parse id to number
+          french: item.targetSentence, // Map targetSentence to french
+          english: item.englishSentence, // Map englishSentence to english
           audioSrcFr: item.audioSrcFr,
           audioSrcEn: item.audioSrcEn,
         }));
@@ -159,8 +159,8 @@ export default function LinguaLeapPage() {
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
-       if (!audioRef.current.paused) { // Ensure it's actually paused
-         audioRef.current.currentTime = 0; // Reset time as a fallback
+       if (!audioRef.current.paused) { 
+         audioRef.current.currentTime = 0; 
        }
     }
     if (enPlayTimeoutRef.current) {
@@ -174,7 +174,7 @@ export default function LinguaLeapPage() {
 
   const stopContinuousPlay = useCallback(() => {
     setIsContinuousPlaying(false);
-    isContinuousPlayingRef.current = false; // Ensure ref is also updated immediately
+    isContinuousPlayingRef.current = false; 
     stopAudio();
     continuousPlayCurrentIndexRef.current = 0;
     showNotification("Continuous play stopped.");
@@ -182,13 +182,11 @@ export default function LinguaLeapPage() {
 
 
   const applyChunkSettings = useCallback(() => {
-    if (isInitialLoading) return; // Don't run if initial load is still happening
+    if (isInitialLoading) return; 
     
     if (allSentences.length === 0 && !isInitialLoading) {
       setCurrentChunkSentences([]);
       setCurrentSentenceIndex(0);
-      // Optionally show a notification if the user tries to load a chunk when no data is available
-      // showNotification("No sentence data available to load chunks.", "destructive");
       setIsChunkLoading(false);
       return;
     }
@@ -201,7 +199,6 @@ export default function LinguaLeapPage() {
       stopAudio();
     }
     
-    // Short delay to allow UI to update (e.g., show loading state)
     setTimeout(() => {
       const startIndex = selectedChunkNum * chunkSize;
       const endIndex = Math.min(startIndex + chunkSize, allSentences.length);
@@ -219,7 +216,7 @@ export default function LinguaLeapPage() {
       setIsChunkLoading(false);
       if (newChunk.length > 0) {
         showNotification(`Chunk ${selectedChunkNum + 1} loaded!`);
-      } else if (allSentences.length > 0) { // Only show if there was data to begin with
+      } else if (allSentences.length > 0) { 
         showNotification(`Chunk ${selectedChunkNum + 1} is empty.`);
       }
     }, 200);
@@ -227,11 +224,11 @@ export default function LinguaLeapPage() {
   }, [allSentences, selectedChunkNum, chunkSize, studyMode, stopAudio, stopContinuousPlay, showNotification, isInitialLoading]);
   
   useEffect(() => { 
-    if (!isInitialLoading) { // Only apply settings after initial data load attempt
+    if (!isInitialLoading) { 
         applyChunkSettings(); 
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChunkNum, chunkSize, isInitialLoading, allSentences.length]); // Rerun when selectedChunkNum or chunkSize changes, or after initial load
+  }, [selectedChunkNum, chunkSize, isInitialLoading, allSentences.length]); 
   
 
   const playAudioSequence = useCallback(async (
@@ -267,25 +264,20 @@ export default function LinguaLeapPage() {
       return;
     }
     
-    // Stop any currently playing audio before starting a new sequence
-    // This is important to prevent multiple audio tracks from playing or overlapping
     stopAudio(); 
-    // Allow a brief moment for the stopAudio to take effect before playing new audio
     await new Promise(resolve => setTimeout(resolve, 50));
 
 
     const playPart = async (src: string, type: 'fr' | 'en'): Promise<boolean> => {
       if (playRequestCounterRef.current !== currentPlayId) {
-        return false; // Obsolete request
+        return false; 
       }
 
       try {
         audioElement.src = src;
-        audioElement.load(); // Important to call load() after changing src
+        audioElement.load(); 
         audioElement.playbackRate = playbackSpeedRef.current;
         
-        // For mobile browsers, play() must be user-initiated.
-        // This might sometimes cause issues if not directly tied to a click.
         await audioElement.play();
         
         if (playRequestCounterRef.current === currentPlayId) {
@@ -295,8 +287,8 @@ export default function LinguaLeapPage() {
         }
       } catch (err) {
         console.error(`Error playing ${type} audio:`, err);
-        showNotification(`Error playing audio. Please try again.`, "destructive");
-        // If play fails, ensure we are in a stopped state
+        const attemptedSrc = audioElement.currentSrc || src;
+        showNotification(`Error playing audio. Source: ${attemptedSrc}. Please check if the file exists and the path is correct.`, "destructive");
         if (playRequestCounterRef.current === currentPlayId) {
             setIsAudioPlaying(false);
             setCurrentAudioSrcType(null);
@@ -308,26 +300,22 @@ export default function LinguaLeapPage() {
     if (sentence.audioSrcFr) {
       const success = await playPart(sentence.audioSrcFr, 'fr');
       if (!success && playRequestCounterRef.current === currentPlayId) { 
-        // If French fails, don't proceed to English, call end logic
         handleSequenceEndLogicRef.current?.();
       }
     } else if (sentence.audioSrcEn) {
-      // If no French audio, play English directly and then call end logic
       const success = await playPart(sentence.audioSrcEn, 'en');
        if (success && playRequestCounterRef.current === currentPlayId) {
-         // Since only English played, set a timeout to call end logic, simulating natural pause
          setTimeout(() => {
            if (playRequestCounterRef.current === currentPlayId) {
              setIsAudioPlaying(false);
              setCurrentAudioSrcType(null);
              handleSequenceEndLogicRef.current?.();
            }
-         }, 500); // Adjust delay as needed
+         }, 500); 
        } else if (playRequestCounterRef.current === currentPlayId) {
          handleSequenceEndLogicRef.current?.();
        }
     } else {
-        // No audio source, immediately call end logic
         handleSequenceEndLogicRef.current?.();
     }
   }, [stopAudio, showNotification]);
@@ -351,7 +339,7 @@ export default function LinguaLeapPage() {
         const nextIndex = continuousPlayCurrentIndexRef.current + 1;
         
         if (nextIndex < currentChunkSentencesRef.current.length) {
-          setCurrentSentenceIndex(nextIndex); // This will trigger its own useEffect for answer reveal
+          setCurrentSentenceIndex(nextIndex); 
           continuousPlayCurrentIndexRef.current = nextIndex;
           
           setTimeout(() => {
@@ -378,7 +366,7 @@ export default function LinguaLeapPage() {
         enPlayTimeoutRef.current = setTimeout(async () => {
           if (
             playRequestCounterRef.current !== endedPlayId ||
-            (currentAudioSrcTypeRef.current !== 'fr' && currentAudioSrcTypeRef.current !== null) // Allow if it was reset by stopAudio
+            (currentAudioSrcTypeRef.current !== 'fr' && currentAudioSrcTypeRef.current !== null) 
           ) {
             if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
             return;
@@ -409,17 +397,44 @@ export default function LinguaLeapPage() {
         setIsAudioPlaying(false);
         setCurrentAudioSrcType(null);
         if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
-      } else { // If currentType is null (e.g. after stopAudio was called mid-sequence)
+      } else { 
          if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
       }
     };
 
     audio.addEventListener('ended', handleAudioEnded);
+    
     audio.addEventListener('error', (e) => {
-      console.error('Audio error:', e, audio.error);
-      showNotification(`Audio error: ${audio.error?.message || 'Unknown error'}`, "destructive");
-      stopAudio(); // Stop audio and reset states
-       // Also ensure sequence logic is called if an error occurs during playback
+      const mediaError = audio.error; 
+      const attemptedSrc = audio.currentSrc || (e.target as HTMLAudioElement)?.src || 'Source unknown';
+      let detailedMessage = 'Unknown audio error occurred.';
+      let errorCode: number | string = 'N/A';
+
+      if (mediaError) {
+        errorCode = mediaError.code;
+        switch (mediaError.code) {
+          case 1: // MediaError.MEDIA_ERR_ABORTED
+            detailedMessage = 'Audio playback was aborted.';
+            break;
+          case 2: // MediaError.MEDIA_ERR_NETWORK
+            detailedMessage = 'A network error occurred while fetching the audio.';
+            break;
+          case 3: // MediaError.MEDIA_ERR_DECODE
+            detailedMessage = 'The audio could not be decoded.';
+            break;
+          case 4: // MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
+            detailedMessage = `The audio format is not supported, or the audio file was not found at '${attemptedSrc}'. Please ensure audio files are in the 'public' folder and paths are correct.`;
+            break;
+          default:
+            detailedMessage = mediaError.message || 'An unspecified audio error occurred.';
+        }
+        console.error(`Audio Error Details - Code: ${errorCode}, Message: "${detailedMessage}", Attempted Source: ${attemptedSrc}`, mediaError, e);
+      } else {
+        console.error(`Audio Error - An unknown error occurred. Attempted Source: ${attemptedSrc}`, e);
+      }
+      
+      showNotification(`Audio Error: ${detailedMessage} (Code: ${errorCode})`, "destructive");
+      stopAudio(); 
       if(handleSequenceEndLogicRef.current) {
         handleSequenceEndLogicRef.current();
       }
@@ -427,11 +442,11 @@ export default function LinguaLeapPage() {
 
     return () => {
       audio.removeEventListener('ended', handleAudioEnded);
+      audio.removeEventListener('error', (e) => { /* Re-reference the modified handler if needed or ensure this matches for removal */ });
       if (enPlayTimeoutRef.current) clearTimeout(enPlayTimeoutRef.current);
-      // Ensure audio is stopped and resources are potentially released on component unmount
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = ""; // Release resource
+        audioRef.current.src = ""; 
       }
     };
   }, [playAudioSequence, stopAudio, stopContinuousPlay, showNotification]);
@@ -481,7 +496,6 @@ export default function LinguaLeapPage() {
     } else if (studyMode !== StudyMode.ActiveRecall) {
       setIsAnswerRevealed(true);
     }
-    // If continuous playing, answer is always revealed
     if (isContinuousPlayingRef.current) {
         setIsAnswerRevealed(true);
     }
@@ -500,13 +514,12 @@ export default function LinguaLeapPage() {
     if (currentChunkSentencesRef.current.length > 0) {
       stopAudio();
       setIsContinuousPlaying(true);
-      isContinuousPlayingRef.current = true; // Update ref immediately
+      isContinuousPlayingRef.current = true; 
       continuousPlayCurrentIndexRef.current = 0;
       setCurrentSentenceIndex(0);
       
-      setIsAnswerRevealed(true); // Always reveal answers during continuous play
+      setIsAnswerRevealed(true); 
       
-      // Delay slightly to ensure state updates are processed
       setTimeout(() => playAudioSequence(currentChunkSentencesRef.current[0], true), 100);
       showNotification("Starting continuous play for the chunk.");
     } else {
@@ -516,11 +529,11 @@ export default function LinguaLeapPage() {
 
   const currentSentenceData = currentChunkSentences[currentSentenceIndex] || null;
 
-  if (isInitialLoading && allSentences.length === 0) { // Show spinner only if absolutely no data yet.
+  if (isInitialLoading && allSentences.length === 0) { 
     return <div className="flex justify-center items-center min-h-screen"><LoadingSpinner size={64} /></div>;
   }
 
-  if (error && allSentences.length === 0) { // Show critical error if data loading failed and no sentences available
+  if (error && allSentences.length === 0) { 
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-destructive p-8 text-center">
         <AlertCircle className="h-16 w-16 mb-4" />
@@ -551,7 +564,7 @@ export default function LinguaLeapPage() {
             numChunks={numChunks}
             onLoadChunk={applyChunkSettings}
             allSentencesCount={allSentences.length}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)} // Show loading if chunk is loading OR initial data is still being fetched but some old data might exist
+            isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)} 
           />
           <StudyArea
             sentence={currentSentenceData}
@@ -578,7 +591,7 @@ export default function LinguaLeapPage() {
               totalInChunk: currentChunkSentences.length,
               totalAll: allSentences.length,
             }}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} // True if actively loading chunk or initial data with nothing to show
+            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
             allSentencesCount={allSentences.length}
           />
           <ContinuousListeningSection
@@ -605,5 +618,3 @@ export default function LinguaLeapPage() {
     </div>
   );
 }
-
-    
