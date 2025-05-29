@@ -13,6 +13,7 @@ import ControlsSection from '@/components/app/ControlsSection';
 import StudyArea from '@/components/app/StudyArea';
 import ContinuousListeningSection from '@/components/app/ContinuousListeningSection';
 import FlashcardGame from '@/components/app/FlashcardGame';
+import SentenceBuilderGame from '@/components/app/SentenceBuilderGame'; // Added
 import NativeContentSwitchSection from '@/components/app/NativeContentSwitchSection';
 import Footer from '@/components/app/Footer';
 import { LoadingSpinner } from '@/components/app/LoadingSpinner';
@@ -418,17 +419,18 @@ export default function LinguaLeapPage() {
     let secondaryAudioSrc: string | undefined;
     let secondaryLang: 'en' | 'al' | null = null;
 
+    // Always play French first
+    primaryAudioSrc = sentence.audioSrcFr;
+    primaryLang = 'fr';
+
     if (currentLanguageRef.current === 'al') {
-      primaryAudioSrc = sentence.audioSrcFr; 
-      primaryLang = 'fr';
       secondaryAudioSrc = sentence.audioSrcAl; 
       secondaryLang = 'al';
     } else { 
-      primaryAudioSrc = sentence.audioSrcFr; 
-      primaryLang = 'fr';
       secondaryAudioSrc = sentence.audioSrcEn; 
       secondaryLang = 'en';
     }
+
 
     const playPrimary = () => {
       if (!primaryAudioSrc) {
@@ -701,6 +703,11 @@ export default function LinguaLeapPage() {
           <FlashcardGame
             language={currentLanguage}
             sentences={currentChunkSentences}
+            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+          />
+          <SentenceBuilderGame
+            language={currentLanguage}
+            sentence={currentSentenceData}
             isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
           />
           <NativeContentSwitchSection

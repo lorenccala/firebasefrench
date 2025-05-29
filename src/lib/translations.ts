@@ -81,4 +81,17 @@ export const translations = {
   wordCounter: { en: "Word {current} of {total}", al: "Fjala {current} nga {total}" },
   noEnglishTranslation: { en: "No English translation available.", al: "Nuk ka përkthim në anglisht." },
   noAlbanianTranslation: { en: "No Albanian translation available.", al: "Nuk ka përkthim në shqip." },
+
+  // Sentence Builder Game
+  sentenceBuilderTitle: { en: "Sentence Builder Challenge", al: "Sfida e Ndërtimit të Fjalive" },
+  sentenceBuilderDescription: { en: "Reconstruct the French sentence by clicking the words in the correct order.", al: "Rindërto fjalinë frënge duke klikuar fjalët në rendin e duhur." },
+  loadingChallenge: { en: "Loading challenge...", al: "Duke ngarkuar sfidën..." },
+  sentenceBuilderNoSentence: { en: "Load a sentence in the Study Zone to start the challenge.", al: "Ngarko një fjali në Zonën e Studimit për të filluar sfidën." },
+  sentenceBuilderNoWords: { en: "Could not extract words from the current sentence.", al: "Nuk mund të nxirreshin fjalë nga fjalia aktuale." },
+  sentenceBuilderConstructionArea: { en: "Click words below to build the sentence here.", al: "Klikoni fjalët më poshtë për të ndërtuar fjalinë këtu." },
+  sentenceBuilderAllWordsUsed: { en: "All words used. Click a word above to move it back.", al: "Të gjitha fjalët janë përdorur. Klikoni një fjalë më sipër për ta kthyer mbrapa." },
+  sentenceBuilderCorrect: { en: "Correct! Well done!", al: "Saktë! Bravo!" },
+  sentenceBuilderIncorrect: { en: "Not quite. The correct sentence is: \"<strong>{correctSentence}</strong>\". Try again!", al: "Jo saktë. Fjala e saktë është: \"<strong>{correctSentence}</strong>\". Provo përsëri!" },
+  checkButton: { en: "Check", al: "Kontrollo" },
+  resetButton: { en: "Reset", al: "Rivendos" },
 };
