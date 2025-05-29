@@ -48,18 +48,25 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
   };
 
   const prepareChallenge = (currentSentence: Sentence | null) => {
-    if (!currentSentence || !currentSentence.french || !currentSentence.verbFrench) {
-      setBlankedSentence('');
+    // Always reset user-specific states when preparing a new challenge
+    setUserAnswer('');
+    setFeedbackMessage('');
+    setIsCorrect(null);
+
+    if (!currentSentence || !currentSentence.french) {
+      setBlankedSentence(t('sentenceBuilderNoSentence')); // Generic message if no sentence or its French text
       setCorrectAnswer('');
-      setUserAnswer('');
-      setFeedbackMessage('');
-      setIsCorrect(null);
+      return;
+    }
+
+    if (!currentSentence.verbFrench) {
+      setBlankedSentence(t('fillInBlanksCannotCreate')); // Specific message if verb data is missing for this sentence
+      setCorrectAnswer('');
       return;
     }
 
     const verbToBlank = currentSentence.verbFrench;
     // Use a regex to replace the verb, case-insensitive, ensuring whole word match.
-    // This is a simple approach; more robust verb conjugation matching would be complex.
     const regex = new RegExp(`\\b${verbToBlank.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
     
     if (currentSentence.french.match(regex)) {
@@ -68,15 +75,9 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
       setCorrectAnswer(verbToBlank); // Store the original form of the verb as the answer
     } else {
       // Fallback if the exact verb form isn't found (e.g. due to conjugation)
-      // For simplicity, we'll skip the challenge for this sentence.
-      // A more advanced version could try to identify any form of the verb.
       setBlankedSentence(t('fillInBlanksVerbNotFoundInSentence'));
       setCorrectAnswer('');
     }
-    
-    setUserAnswer('');
-    setFeedbackMessage('');
-    setIsCorrect(null);
   };
 
   useEffect(() => {
@@ -85,6 +86,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
 
   const handleCheckAnswer = () => {
     if (!correctAnswer) {
+      // This case should ideally not be hit if UI correctly gates button, but good for robustness
       setFeedbackMessage(t('fillInBlanksNoChallenge'));
       setIsCorrect(null);
       return;
@@ -100,6 +102,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
   };
 
   const handleResetChallenge = () => {
+    // Re-prepare based on the current sentence, which also resets user input etc.
     prepareChallenge(sentence);
   };
   
@@ -127,6 +130,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
     );
   }
 
+  // Case 1: No sentence data loaded into the game at all
   if (!sentence) {
     return (
       <Card className="shadow-lg">
@@ -141,7 +145,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-center text-muted-foreground">
-              {t('sentenceBuilderNoSentence')}
+              {t('sentenceBuilderNoSentence')} {/* Message: Load a sentence... */}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -149,7 +153,10 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
     );
   }
   
-  if (!blankedSentence || !correctAnswer) {
+  // Case 2: Sentence data exists, but a challenge could not be formed for IT
+  // (e.g., missing verbFrench, or verbFrench not found in sentence.french)
+  // In this scenario, `correctAnswer` will be '', and `blankedSentence` will hold the specific error message from `prepareChallenge`.
+  if (!correctAnswer) {
      return (
       <Card className="shadow-lg">
         <CardHeader>
@@ -163,7 +170,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-center text-muted-foreground">
-              {correctAnswer ? t('fillInBlanksErrorCreating') : t('fillInBlanksCannotCreate')}
+              {blankedSentence || t('fillInBlanksErrorCreating')} {/* Display specific error from prepareChallenge, or a fallback */}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -179,7 +186,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
     );
   }
 
-
+  // Case 3: Challenge is ready, render the game UI
   return (
     <Card className="shadow-lg w-full">
       <CardHeader>
@@ -240,7 +247,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
             <Button 
                 onClick={handleCheckAnswer} 
                 className="bg-primary hover:bg-primary/90"
-                disabled={!userAnswer || isCorrect === true}
+                disabled={!userAnswer || isCorrect === true || !correctAnswer} // Also disable if no correctAnswer
             >
             <Check className="mr-2 h-4 w-4" /> {t('checkButton')}
             </Button>
@@ -251,4 +258,3 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
 };
 
 export default FillInTheBlanksGame;
-
