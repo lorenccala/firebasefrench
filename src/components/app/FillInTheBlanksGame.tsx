@@ -48,50 +48,73 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
   };
 
   const prepareChallenge = (currentSentence: Sentence | null) => {
-    // Always reset user-specific states when preparing a new challenge
     setUserAnswer('');
     setFeedbackMessage('');
     setIsCorrect(null);
 
     if (!currentSentence || !currentSentence.french) {
-      setBlankedSentence(t('sentenceBuilderNoSentence')); // Generic message if no sentence or its French text
+      setBlankedSentence(t('sentenceBuilderNoSentence')); 
       setCorrectAnswer('');
       return;
     }
 
-    if (!currentSentence.verbFrench) {
-      setBlankedSentence(t('fillInBlanksCannotCreate')); // Specific message if verb data is missing for this sentence
+    const sourceSentence = currentSentence.french;
+    // Get all words, including empty strings from multiple spaces, to preserve original structure
+    const originalWordsArray = sourceSentence.split(' '); 
+    // Filter to get only "actual" words for random selection
+    const actualWords = originalWordsArray.filter(word => word.length > 0);
+
+    if (actualWords.length === 0) {
+      setBlankedSentence(t('fillInBlanksCannotProcessSentence'));
       setCorrectAnswer('');
       return;
     }
 
-    const verbToBlank = currentSentence.verbFrench;
-    // Use a regex to replace the verb, case-insensitive, ensuring whole word match.
-    const regex = new RegExp(`\\b${verbToBlank.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    const randomIndexInActualWords = Math.floor(Math.random() * actualWords.length);
+    const wordToSetAsCorrectAnswer = actualWords[randomIndexInActualWords];
+    setCorrectAnswer(wordToSetAsCorrectAnswer);
+
+    // Find the original index of the chosen actual word in the originalWordsArray
+    let currentActualWordCount = 0;
+    let indexOfWordToBlankInOriginalArray = -1;
+
+    for (let i = 0; i < originalWordsArray.length; i++) {
+      if (originalWordsArray[i].length > 0) { // If it's one of the "actualWords"
+        if (currentActualWordCount === randomIndexInActualWords) {
+          indexOfWordToBlankInOriginalArray = i;
+          break;
+        }
+        currentActualWordCount++;
+      }
+    }
+
+    if (indexOfWordToBlankInOriginalArray === -1) {
+      // This should theoretically not be reached if actualWords.length > 0
+      setBlankedSentence(t('fillInBlanksCannotProcessSentence'));
+      setCorrectAnswer('');
+      return;
+    }
     
-    if (currentSentence.french.match(regex)) {
-      const sentenceWithBlank = currentSentence.french.replace(regex, '_______');
-      setBlankedSentence(sentenceWithBlank);
-      setCorrectAnswer(verbToBlank); // Store the original form of the verb as the answer
-    } else {
-      // Fallback if the exact verb form isn't found (e.g. due to conjugation)
-      setBlankedSentence(t('fillInBlanksVerbNotFoundInSentence'));
-      setCorrectAnswer('');
-    }
+    const sentenceWithBlankParts = originalWordsArray.map((word, index) => {
+      if (index === indexOfWordToBlankInOriginalArray) {
+        return '___BLANK___';
+      }
+      return word;
+    });
+    
+    setBlankedSentence(sentenceWithBlankParts.join(' '));
   };
 
   useEffect(() => {
     prepareChallenge(sentence);
-  }, [sentence, language]); // Add language to dependencies if t() within prepareChallenge needs it
+  }, [sentence, language]);
 
   const handleCheckAnswer = () => {
     if (!correctAnswer) {
-      // This case should ideally not be hit if UI correctly gates button, but good for robustness
       setFeedbackMessage(t('fillInBlanksNoChallenge'));
       setIsCorrect(null);
       return;
     }
-    // Case-insensitive comparison, trim whitespace
     if (userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase()) {
       setIsCorrect(true);
       setFeedbackMessage(t('fillInBlanksCorrect', { answer: correctAnswer }));
@@ -102,13 +125,12 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
   };
 
   const handleResetChallenge = () => {
-    // Re-prepare based on the current sentence, which also resets user input etc.
     prepareChallenge(sentence);
   };
   
   const handleUserAnswerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserAnswer(event.target.value);
-    if (feedbackMessage) setFeedbackMessage(''); // Clear feedback when user types
+    if (feedbackMessage) setFeedbackMessage('');
     if (isCorrect !== null) setIsCorrect(null);
   };
 
@@ -130,7 +152,6 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
     );
   }
 
-  // Case 1: No sentence data loaded into the game at all
   if (!sentence) {
     return (
       <Card className="shadow-lg">
@@ -145,7 +166,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-center text-muted-foreground">
-              {t('sentenceBuilderNoSentence')} {/* Message: Load a sentence... */}
+              {t('sentenceBuilderNoSentence')}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -153,9 +174,6 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
     );
   }
   
-  // Case 2: Sentence data exists, but a challenge could not be formed for IT
-  // (e.g., missing verbFrench, or verbFrench not found in sentence.french)
-  // In this scenario, `correctAnswer` will be '', and `blankedSentence` will hold the specific error message from `prepareChallenge`.
   if (!correctAnswer) {
      return (
       <Card className="shadow-lg">
@@ -170,7 +188,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-center text-muted-foreground">
-              {blankedSentence || t('fillInBlanksErrorCreating')} {/* Display specific error from prepareChallenge, or a fallback */}
+              {blankedSentence || t('fillInBlanksCannotProcessSentence')}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -186,7 +204,6 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
     );
   }
 
-  // Case 3: Challenge is ready, render the game UI
   return (
     <Card className="shadow-lg w-full">
       <CardHeader>
@@ -199,7 +216,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
       <CardContent className="space-y-6">
         <div className="min-h-[80px] p-4 border border-dashed rounded-md bg-muted/30 flex flex-col justify-center items-center text-center">
           <p className="text-xl" data-ai-hint="sentence with blank">
-            {blankedSentence.split('_______').map((part, index, arr) => (
+            {blankedSentence.split('___BLANK___').map((part, index, arr) => (
               <React.Fragment key={index}>
                 {part}
                 {index < arr.length - 1 && (
@@ -224,7 +241,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
           </Alert>
         )}
         
-        {sentence && sentence.english && (
+        {sentence && (sentence.english || sentence.albanianSentence) && (
             <p className="text-sm text-muted-foreground text-center italic">
                 {t('fillInBlanksHintLabel')}: {language === 'al' ? (sentence.albanianSentence || sentence.english) : sentence.english}
             </p>
@@ -247,7 +264,7 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
             <Button 
                 onClick={handleCheckAnswer} 
                 className="bg-primary hover:bg-primary/90"
-                disabled={!userAnswer || isCorrect === true || !correctAnswer} // Also disable if no correctAnswer
+                disabled={!userAnswer || isCorrect === true || !correctAnswer}
             >
             <Check className="mr-2 h-4 w-4" /> {t('checkButton')}
             </Button>
@@ -258,3 +275,4 @@ const FillInTheBlanksGame: FC<FillInTheBlanksGameProps> = ({
 };
 
 export default FillInTheBlanksGame;
+    
