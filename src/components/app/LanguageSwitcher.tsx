@@ -19,14 +19,16 @@ const LanguageSwitcher: FC<LanguageSwitcherProps> = ({ currentLanguage, onLangua
         size="sm"
         onClick={() => onLanguageChange('en')}
       >
-        {translations.english[currentLanguage]}
+        <span role="img" aria-label="UK Flag">🇬🇧</span>
+        <span>{translations.english[currentLanguage]}</span>
       </Button>
       <Button
         variant={currentLanguage === 'al' ? 'default' : 'outline'}
         size="sm"
         onClick={() => onLanguageChange('al')}
       >
-        {translations.albanian[currentLanguage]}
+        <span role="img" aria-label="Albanian Flag">🇦🇱</span>
+        <span>{translations.albanian[currentLanguage]}</span>
       </Button>
     </div>
   );
