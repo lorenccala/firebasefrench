@@ -4,6 +4,8 @@ export interface Sentence {
   english: string;
   audioSrcFr?: string;
   audioSrcEn?: string;
+  verbFrench?: string; // Added for French verb
+  verbEnglish?: string; // Added for English verb
 }
 
 export enum StudyMode {

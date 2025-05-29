@@ -20,9 +20,9 @@ import { AlertCircle } from 'lucide-react';
 // Define an interface for the raw data structure from JSON
 interface RawSentenceData {
   id: string;
-  verb: string;
+  verb: string; // This is the French verb
   targetSentence: string; // French sentence
-  verbEnglish: string;
+  verbEnglish: string; // This is the English verb
   englishSentence: string; // English sentence
   verbAlbanian: string;
   albanianSentence: string;
@@ -118,9 +118,11 @@ export default function LinguaLeapPage() {
         setAllSentences([]);
       } else {
         const transformedSentences: Sentence[] = rawData.map(item => ({
-          id: parseInt(item.id, 10), // Parse id to number
-          french: item.targetSentence, // Map targetSentence to french
-          english: item.englishSentence, // Map englishSentence to english
+          id: parseInt(item.id, 10),
+          french: item.targetSentence,
+          english: item.englishSentence,
+          verbFrench: item.verb, // Map French verb
+          verbEnglish: item.verbEnglish, // Map English verb
           audioSrcFr: item.audioSrcFr,
           audioSrcEn: item.audioSrcEn,
         }));

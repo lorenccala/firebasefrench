@@ -1,8 +1,9 @@
+
 "use client";
 
 import type { FC } from 'react';
 import {
-  Play, Pause, SkipBack, SkipForward, RotateCcw, Volume2, ChevronDown, Eye, EyeOff, Info, Edit3
+  Play, Pause, SkipBack, SkipForward, RotateCcw, Eye, Info, Edit3, BookOpenText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { type Sentence, StudyMode } from '@/types'; // Added StudyMode import
+import { type Sentence, StudyMode } from '@/types'; 
 import { PLAYBACK_SPEEDS } from '@/lib/constants';
 import { LoadingSpinner } from './LoadingSpinner';
 import GrammarExplainer from './GrammarExplainer';
@@ -139,7 +140,14 @@ const StudyArea: FC<StudyAreaProps> = ({
       <CardContent className="space-y-6">
         {sentence ? (
           <>
-            <div className="p-6 rounded-lg bg-muted/50 min-h-[120px] flex flex-col justify-center">
+            <div className="p-6 rounded-lg bg-muted/50 min-h-[160px] flex flex-col justify-center">
+              { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && sentence.verbFrench && sentence.verbEnglish && (
+                <div className="mb-3 text-center">
+                  <p className="text-sm text-muted-foreground" data-ai-hint="verb conjugation">
+                    Verb: <span className="font-semibold text-primary">{sentence.verbFrench}</span> (to {sentence.verbEnglish})
+                  </p>
+                </div>
+              )}
               <p className="text-2xl font-semibold text-primary-foreground bg-primary p-3 rounded-md shadow text-center" data-ai-hint="foreign language text">
                 {sentence.french}
               </p>

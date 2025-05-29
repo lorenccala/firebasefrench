@@ -1,37 +1,46 @@
 [
   {
-    "id": 1,
-    "french": "Bonjour le monde.",
-    "english": "Hello world.",
-    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=Bonjour%20le%20monde.&tl=fr&client=tw-ob",
-    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=Hello%20world.&tl=en&client=tw-ob"
+      "id": "1",
+      "verb": "être",
+      "targetSentence": "Il est toujours gentil avec ses amis.",
+      "verbEnglish": "be",
+      "englishSentence": "He is always nice to his friends.",
+      "verbAlbanian": "të jetë",
+      "albanianSentence": "Ai është gjithmonë i sjellshëm me miqtë e tij.",
+      "audioSrcEn": "audio/audiosrcen/temp_english_1.mp3",
+      "audioSrcFr": "audio/audiosrcfr/temp_french_1.mp3"
   },
   {
-    "id": 2,
-    "french": "Comment ça va ?",
-    "english": "How are you?",
-    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=Comment%20%C3%A7a%20va%20?&tl=fr&client=tw-ob",
-    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=How%20are%20you?&tl=en&client=tw-ob"
+      "id": "2",
+      "verb": "faire",
+      "targetSentence": "Elle fait ses devoirs tous les jours.",
+      "verbEnglish": "to do",
+      "englishSentence": "She does her homework every day.",
+      "verbAlbanian": "për të bërë",
+      "albanianSentence": "Ajo i bën detyrat e shtëpisë çdo ditë.",
+      "audioSrcEn": "audio/audiosrcen/temp_english_2.mp3",
+      "audioSrcFr": "audio/audiosrcfr/temp_french_2.mp3"
   },
   {
-    "id": 3,
-    "french": "Je m'appelle Claude.",
-    "english": "My name is Claude.",
-    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=Je%20m'appelle%20Claude.&tl=fr&client=tw-ob",
-    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=My%20name%20is%20Claude.&tl=en&client=tw-ob"
+      "id": "3",
+      "verb": "avoir",
+      "targetSentence": "Nous avons beaucoup de travail à faire.",
+      "verbEnglish": "to have",
+      "englishSentence": "We have a lot of work to do.",
+      "verbAlbanian": "të ketë",
+      "albanianSentence": "Kemi shumë punë për të bërë.",
+      "audioSrcEn": "audio/audiosrcen/temp_english_3.mp3",
+      "audioSrcFr": "audio/audiosrcfr/temp_french_3.mp3"
   },
   {
-    "id": 4,
-    "french": "Quel temps fait-il aujourd'hui ?",
-    "english": "What's the weather like today?",
-    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=Quel%20temps%20fait-il%20aujourd'hui%20?&tl=fr&client=tw-ob",
-    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=What's%20the%20weather%20like%20today?&tl=en&client=tw-ob"
-  },
-  {
-    "id": 5,
-    "french": "J'aime apprendre de nouvelles langues.",
-    "english": "I like to learn new languages.",
-    "audioSrcFr": "https://translate.google.com/translate_tts?ie=UTF-8&q=J'aime%20apprendre%20de%20nouvelles%20langues.&tl=fr&client=tw-ob",
-    "audioSrcEn": "https://translate.google.com/translate_tts?ie=UTF-8&q=I%20like%20to%20learn%20new%20languages.&tl=en&client=tw-ob"
+      "id": "4",
+      "verb": "voir",
+      "targetSentence": "Je vois un oiseau dans le jardin.",
+      "verbEnglish": "see",
+      "englishSentence": "I see a bird in the garden.",
+      "verbAlbanian": "shih",
+      "albanianSentence": "Unë shoh një zog në kopsht.",
+      "audioSrcEn": "audio/audiosrcen/temp_english_4.mp3",
+      "audioSrcFr": "audio/audiosrcfr/temp_french_4.mp3"
   }
 ]
