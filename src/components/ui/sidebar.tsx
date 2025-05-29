@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -549,12 +550,22 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
+      onClick, // Capture the onClick prop
       ...props
     },
     ref
   ) => {
     const Comp = asChild ? Slot : "button"
-    const { isMobile, state } = useSidebar()
+    const { isMobile, state, setOpenMobile } = useSidebar()
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (onClick) {
+        onClick(event)
+      }
+      if (isMobile) {
+        setOpenMobile(false)
+      }
+    }
 
     const button = (
       <Comp
@@ -563,6 +574,7 @@ const SidebarMenuButton = React.forwardRef<
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+        onClick={handleClick} // Use the new composite handler
         {...props}
       />
     )
@@ -761,3 +773,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    
