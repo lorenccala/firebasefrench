@@ -6,6 +6,7 @@ export interface Sentence {
   albanianSentence: string; // Added for Albanian sentence
   audioSrcFr?: string;
   audioSrcEn?: string;
+  audioSrcAl?: string; // Added for Albanian audio
   verbFrench?: string;
   verbEnglish?: string;
   verbAlbanian?: string; // Added for Albanian verb

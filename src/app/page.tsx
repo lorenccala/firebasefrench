@@ -28,6 +28,7 @@ interface RawSentenceData {
   albanianSentence: string;
   audioSrcEn?: string;
   audioSrcFr?: string;
+  audioSrcAl?: string;
 }
 
 export default function LinguaLeapPage() {
@@ -50,7 +51,7 @@ export default function LinguaLeapPage() {
   const [isLooping, setIsLooping] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [currentAudioSrcType, setCurrentAudioSrcType] = useState<'fr' | 'en' | null>(null);
+  const [currentAudioSrcType, setCurrentAudioSrcType] = useState<'fr' | 'en' | 'al' | null>(null);
 
   const [isAnswerRevealed, setIsAnswerRevealed] = useState<boolean>(studyMode !== StudyMode.ActiveRecall);
   const [isContinuousPlaying, setIsContinuousPlaying] = useState<boolean>(false);
@@ -78,6 +79,7 @@ export default function LinguaLeapPage() {
   const isAudioPlayingRef = useRef(isAudioPlaying);
   const isContinuousPlayingRef = useRef(isContinuousPlaying);
   const isLoopingRef = useRef(isLooping);
+  const currentLanguageRef = useRef(currentLanguage);
 
   const enPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleSequenceEndLogicRef = useRef<(() => void) | null>(null);
@@ -90,6 +92,8 @@ export default function LinguaLeapPage() {
   useEffect(() => { isAudioPlayingRef.current = isAudioPlaying; }, [isAudioPlaying]);
   useEffect(() => { isContinuousPlayingRef.current = isContinuousPlaying; }, [isContinuousPlaying]);
   useEffect(() => { isLoopingRef.current = isLooping; }, [isLooping]);
+  useEffect(() => { currentLanguageRef.current = currentLanguage; }, [currentLanguage]);
+
 
   useEffect(() => {
     if (studyMode === StudyMode.ActiveRecall && !isContinuousPlayingRef.current) {
@@ -100,18 +104,18 @@ export default function LinguaLeapPage() {
   }, [studyMode]);
 
   const showNotification = useCallback((messageKey: keyof typeof translations, variant: "default" | "destructive" = "default", params?: Record<string, string | number>) => {
-    let message = translations[messageKey] ? translations[messageKey][currentLanguage] : String(messageKey);
+    let message = translations[messageKey] ? translations[messageKey][currentLanguageRef.current] : String(messageKey);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         message = message.replace(`{${key}}`, String(value));
       });
     }
     toast({
-      title: variant === "destructive" ? translations.errorTitle[currentLanguage] : translations.notificationTitle[currentLanguage],
+      title: variant === "destructive" ? translations.errorTitle[currentLanguageRef.current] : translations.notificationTitle[currentLanguageRef.current],
       description: message,
       variant: variant,
     });
-  }, [toast, currentLanguage]);
+  }, [toast]);
 
   const loadSentenceData = useCallback(async () => {
     setIsInitialLoading(true);
@@ -135,6 +139,7 @@ export default function LinguaLeapPage() {
           verbAlbanian: item.verbAlbanian,
           audioSrcFr: item.audioSrcFr,
           audioSrcEn: item.audioSrcEn,
+          audioSrcAl: item.audioSrcAl,
         }));
         setAllSentences(transformedSentences);
         showNotification("sentenceDataLoaded");
@@ -148,7 +153,7 @@ export default function LinguaLeapPage() {
     } finally {
       setIsInitialLoading(false);
     }
-  }, [showNotification, currentLanguage]);
+  }, [showNotification]);
 
   useEffect(() => { loadSentenceData(); }, [loadSentenceData]);
 
@@ -190,7 +195,7 @@ export default function LinguaLeapPage() {
     stopAudio();
     continuousPlayCurrentIndexRef.current = 0;
     showNotification("continuousPlayStopped");
-  }, [stopAudio, showNotification, currentLanguage]);
+  }, [stopAudio, showNotification]);
 
 
   const applyChunkSettings = useCallback(() => {
@@ -233,7 +238,7 @@ export default function LinguaLeapPage() {
       }
     }, 200);
 
-  }, [allSentences, selectedChunkNum, chunkSize, studyMode, stopAudio, stopContinuousPlay, showNotification, isInitialLoading, currentLanguage]);
+  }, [allSentences, selectedChunkNum, chunkSize, studyMode, stopAudio, stopContinuousPlay, showNotification, isInitialLoading]);
   
   useEffect(() => { 
     if (!isInitialLoading) { 
@@ -267,20 +272,12 @@ export default function LinguaLeapPage() {
       }
       return;
     }
-
-    const hasAudio = sentence.audioSrcFr || sentence.audioSrcEn;
-    if (!hasAudio) {
-      if (isPartOfContinuousSequence && isContinuousPlayingRef.current) {
-        setTimeout(() => handleSequenceEndLogicRef.current?.(), 50);
-      }
-      return;
-    }
     
     stopAudio(); 
     await new Promise(resolve => setTimeout(resolve, 50));
 
 
-    const playPart = async (src: string, type: 'fr' | 'en'): Promise<boolean> => {
+    const playPart = async (src: string, type: 'fr' | 'en' | 'al'): Promise<boolean> => {
       if (playRequestCounterRef.current !== currentPlayId) {
         return false; 
       }
@@ -309,28 +306,46 @@ export default function LinguaLeapPage() {
       return false;
     };
 
-    if (sentence.audioSrcFr) {
-      const success = await playPart(sentence.audioSrcFr, 'fr');
+    let primarySrc: string | undefined;
+    let primaryType: 'fr' | 'en' | 'al' | null = null;
+
+    const langUI = currentLanguageRef.current;
+
+    if (langUI === 'al') {
+      if (sentence.audioSrcAl) {
+        primarySrc = sentence.audioSrcAl;
+        primaryType = 'al';
+      } else if (sentence.audioSrcFr) {
+        primarySrc = sentence.audioSrcFr;
+        primaryType = 'fr';
+      } else if (sentence.audioSrcEn) {
+        primarySrc = sentence.audioSrcEn;
+        primaryType = 'en';
+      }
+    } else { // langUI === 'en'
+      if (sentence.audioSrcFr) {
+        primarySrc = sentence.audioSrcFr;
+        primaryType = 'fr';
+      } else if (sentence.audioSrcEn) {
+        primarySrc = sentence.audioSrcEn;
+        primaryType = 'en';
+      }
+    }
+
+    if (primarySrc && primaryType) {
+      const success = await playPart(primarySrc, primaryType);
       if (!success && playRequestCounterRef.current === currentPlayId) { 
         handleSequenceEndLogicRef.current?.();
       }
-    } else if (sentence.audioSrcEn) {
-      const success = await playPart(sentence.audioSrcEn, 'en');
-       if (success && playRequestCounterRef.current === currentPlayId) {
-         setTimeout(() => {
-           if (playRequestCounterRef.current === currentPlayId) {
-             setIsAudioPlaying(false);
-             setCurrentAudioSrcType(null);
-             handleSequenceEndLogicRef.current?.();
-           }
-         }, 500); 
-       } else if (playRequestCounterRef.current === currentPlayId) {
-         handleSequenceEndLogicRef.current?.();
-       }
+      // The 'ended' event will handle playing the secondary audio if applicable.
     } else {
-        handleSequenceEndLogicRef.current?.();
+      // No audio source found for the sentence based on current logic
+      if (isPartOfContinuousSequence && isContinuousPlayingRef.current) {
+        setTimeout(() => handleSequenceEndLogicRef.current?.(), 50);
+      }
+      return;
     }
-  }, [stopAudio, showNotification, currentLanguage]);
+  }, [stopAudio, showNotification]);
 
 
   useEffect(() => {
@@ -372,45 +387,51 @@ export default function LinguaLeapPage() {
 
     const handleAudioEnded = () => {
       const endedPlayId = playRequestCounterRef.current;
-      const currentType = currentAudioSrcTypeRef.current;
+      const primaryAudioPlayedType = currentAudioSrcTypeRef.current; // Type of audio that just finished
+      const sentence = currentChunkSentencesRef.current[currentSentenceIndexRef.current];
 
-      if (currentType === 'fr') {
+      if (!sentence) {
+        if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
+        return;
+      }
+
+      let secondaryAudioSrc: string | undefined;
+      const secondaryAudioType: 'en' | null = 'en'; // Secondary audio is typically English
+
+      // Determine if secondary (English) audio should play
+      if ((primaryAudioPlayedType === 'fr' || primaryAudioPlayedType === 'al') && sentence.audioSrcEn) {
+        secondaryAudioSrc = sentence.audioSrcEn;
+      }
+
+      if (secondaryAudioSrc) {
         enPlayTimeoutRef.current = setTimeout(async () => {
           if (
             playRequestCounterRef.current !== endedPlayId ||
-            (currentAudioSrcTypeRef.current !== 'fr' && currentAudioSrcTypeRef.current !== null) 
+            (currentAudioSrcTypeRef.current !== primaryAudioPlayedType && currentAudioSrcTypeRef.current !== null)
           ) {
             if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
             return;
           }
-
-          const sentence = currentChunkSentencesRef.current[currentSentenceIndexRef.current];
-          if (sentence?.audioSrcEn) {
-            try {
-              audio.src = sentence.audioSrcEn;
-              audio.load();
-              audio.playbackRate = playbackSpeedRef.current;
-              await audio.play();
-              
-              if (playRequestCounterRef.current === endedPlayId) {
-                setIsAudioPlaying(true);
-                setCurrentAudioSrcType('en');
-              }
-            } catch (err) {
-              console.error(`English playback failed:`, err);
-              if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
+          try {
+            audio.src = secondaryAudioSrc;
+            audio.load();
+            audio.playbackRate = playbackSpeedRef.current;
+            await audio.play();
+            
+            if (playRequestCounterRef.current === endedPlayId) {
+              setIsAudioPlaying(true);
+              setCurrentAudioSrcType(secondaryAudioType); // Now playing 'en'
             }
-          } else {
-             if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
+          } catch (err) {
+            console.error(`Secondary English playback failed:`, err);
+            if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
           }
         }, 500);
-      }
-      else if (currentType === 'en') {
+      } else {
+        // No secondary audio to play (e.g., primary was English or no English audio src)
         setIsAudioPlaying(false);
         setCurrentAudioSrcType(null);
         if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
-      } else { 
-         if(playRequestCounterRef.current === endedPlayId) handleSequenceEndLogicRef.current?.();
       }
     };
 
@@ -463,7 +484,7 @@ export default function LinguaLeapPage() {
         audioRef.current.src = ""; 
       }
     };
-  }, [playAudioSequence, stopAudio, stopContinuousPlay, showNotification, currentLanguage]);
+  }, [playAudioSequence, stopAudio, stopContinuousPlay, showNotification]);
 
 
   const togglePlayPause = useCallback(() => {
@@ -475,7 +496,7 @@ export default function LinguaLeapPage() {
         showNotification("noSentenceToPlay", "destructive");
       }
     }
-  }, [playAudioSequence, stopAudio, showNotification, currentLanguage]);
+  }, [playAudioSequence, stopAudio, showNotification]);
 
 
   const handlePrevSentence = () => {
@@ -519,7 +540,7 @@ export default function LinguaLeapPage() {
   const handleRevealAnswer = () => {
     setIsAnswerRevealed(true);
     const sentence = currentChunkSentencesRef.current[currentSentenceIndexRef.current];
-    if (!isAudioPlayingRef.current && sentence && (sentence.audioSrcFr || sentence.audioSrcEn)) {
+    if (!isAudioPlayingRef.current && sentence) {
       playAudioSequence();
     }
   };
@@ -559,13 +580,15 @@ export default function LinguaLeapPage() {
       </div>
     );
   }
+  
+  const mainContentLayout = "mt-8 space-y-10 md:space-y-12";
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8 font-sans bg-gradient-to-br from-blue-100 via-white to-purple-100">
       <div className="container mx-auto max-w-screen-xl bg-card shadow-2xl rounded-xl p-6 sm:p-8 md:p-10 ring-1 ring-border/50">
         <Header language={currentLanguage} onLanguageChange={setCurrentLanguage} />
         
-        <div className="mt-8 space-y-10 md:space-y-12">
+        <div className={mainContentLayout}>
           <ControlsSection
             language={currentLanguage}
             studyMode={studyMode}
@@ -637,3 +660,4 @@ export default function LinguaLeapPage() {
     </div>
   );
 }
+
