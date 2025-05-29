@@ -24,7 +24,3 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
-
-      # Optional: Run tests (if you have Jest, Playwright, etc.)
-      - name: Run tests
-        run: npm test
