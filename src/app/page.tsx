@@ -88,7 +88,7 @@ export default function LinguaLeapPage() {
 
   useEffect(() => { currentSentenceIndexRef.current = currentSentenceIndex; }, [currentSentenceIndex]);
   useEffect(() => { currentChunkSentencesRef.current = currentChunkSentences; }, [currentChunkSentences]);
-  useEffect(() => { 
+  useEffect(() => {
     playbackSpeedRef.current = playbackSpeed;
     if (audioRef.current) {
       audioRef.current.playbackRate = playbackSpeed;
@@ -199,12 +199,12 @@ export default function LinguaLeapPage() {
   }, [allSentences, chunkSize, selectedChunkNum]);
 
   const stopAudio = useCallback(() => {
-    playRequestCounterRef.current++; 
+    playRequestCounterRef.current++;
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.removeAttribute('src'); 
-      audioRef.current.load(); 
-      
+      audioRef.current.removeAttribute('src');
+      audioRef.current.load();
+
       audioRef.current.oncanplaythrough = null;
       audioRef.current.onended = null;
       audioRef.current.onerror = null;
@@ -220,7 +220,7 @@ export default function LinguaLeapPage() {
 
   const stopContinuousPlay = useCallback(() => {
     setIsContinuousPlaying(false);
-    isContinuousPlayingRef.current = false; 
+    isContinuousPlayingRef.current = false;
     stopAudio();
     continuousPlayCurrentIndexRef.current = 0;
     showNotification("continuousPlayStopped");
@@ -260,9 +260,9 @@ export default function LinguaLeapPage() {
 
 
   const playAudioFile = useCallback((
-    src: string, 
-    lang: 'fr' | 'en' | 'al', 
-    playId: number, 
+    originalSrc: string, // Path from data.json
+    lang: 'fr' | 'en' | 'al',
+    playId: number,
     onEndCallback: () => void
   ) => {
     if (!audioRef.current) {
@@ -274,13 +274,21 @@ export default function LinguaLeapPage() {
     }
 
     if (playRequestCounterRef.current !== playId) {
-      console.log(`Audio file playId ${playId} for "${src}" [${lang}] is stale. Active playId: ${playRequestCounterRef.current}. Aborting play.`);
+      console.log(`Audio file playId ${playId} for "${originalSrc}" [${lang}] is stale. Active playId: ${playRequestCounterRef.current}. Aborting play.`);
       return;
     }
-    
-    const formattedSrc = src.startsWith('/') ? src : `/${src}`;
-    console.log(`Attempting to play audio file (Play ID ${playId}): "${formattedSrc}" [${lang}]`);
-    audioRef.current.src = formattedSrc;
+
+    let pathUnderPublic = originalSrc;
+    if (pathUnderPublic.startsWith('/')) {
+        pathUnderPublic = pathUnderPublic.substring(1);
+    }
+    if (!pathUnderPublic.startsWith('data/')) {
+        pathUnderPublic = `data/${pathUnderPublic}`;
+    }
+    const finalSrcPath = `/${pathUnderPublic}`;
+
+    console.log(`Attempting to play audio file (Play ID ${playId}): "${finalSrcPath}" [${lang}]`);
+    audioRef.current.src = finalSrcPath;
     audioRef.current.playbackRate = playbackSpeedRef.current;
 
     audioRef.current.oncanplaythrough = null;
@@ -293,11 +301,11 @@ export default function LinguaLeapPage() {
           if (playRequestCounterRef.current === playId) {
             setIsAudioPlaying(true);
             setCurrentAudioSrcType(lang);
-            console.log(`Audio playing (Play ID ${playId}): "${formattedSrc}" [${lang}]`);
+            console.log(`Audio playing (Play ID ${playId}): "${finalSrcPath}" [${lang}]`);
           }
         }).catch(error => {
-          console.error(`Error playing audio "${formattedSrc}" (Play ID ${playId}):`, error);
-          showNotification("errorPlayingAudio", "destructive", { source: `${lang} (${formattedSrc}) - Playback error` });
+          console.error(`Error playing audio "${finalSrcPath}" (Play ID ${playId}):`, error);
+          showNotification("errorPlayingAudio", "destructive", { source: `${lang} (${finalSrcPath}) - Playback error` });
           if (playRequestCounterRef.current === playId) {
             setIsAudioPlaying(false);
             setCurrentAudioSrcType(null);
@@ -305,16 +313,16 @@ export default function LinguaLeapPage() {
           }
         });
       } else {
-        console.log(`Audio file oncanplaythrough: playId ${playId} for "${formattedSrc}" is stale. Aborting actual play.`);
+        console.log(`Audio file oncanplaythrough: playId ${playId} for "${finalSrcPath}" is stale. Aborting actual play.`);
       }
     };
 
     audioRef.current.onended = () => {
-      console.log(`Audio file ended (Play ID ${playId}): "${formattedSrc}"`);
+      console.log(`Audio file ended (Play ID ${playId}): "${finalSrcPath}"`);
       if (playRequestCounterRef.current === playId) {
         onEndCallback();
       } else {
-         console.log(`Audio file onended: playId ${playId} for "${formattedSrc}" is stale. Not calling onEndCallback.`);
+         console.log(`Audio file onended: playId ${playId} for "${finalSrcPath}" is stale. Not calling onEndCallback.`);
       }
     };
 
@@ -334,20 +342,20 @@ export default function LinguaLeapPage() {
             errorMessage = 'The audio playback was aborted due to a corruption problem or because the audio used features your browser did not support.';
             break;
           case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            errorMessage = `The audio source is not supported or couldn't be found (Code: ${errorDetails.code}). Ensure audio files are in the 'public' directory and paths in data.json are correct (e.g., /audio/file.mp3).`;
+             errorMessage = `The audio source is not supported or couldn't be found (Code: ${errorDetails.code}). Ensure audio files are in the 'public/data/' directory and paths in data.json are relative to that (e.g., 'audio/file.mp3' for a file at 'public/data/audio/file.mp3').`;
             break;
           default:
             errorMessage = `An unknown error occurred (Code: ${errorDetails.code}).`;
         }
       }
-      console.error(`HTMLAudioElement.onerror - Event:`, e, `\nCode: ${errorDetails?.code}`, `\nMessage: ${errorMessage}`, `\nSrc: "${formattedSrc}"`, `\nLang: ${lang}`);
-      showNotification("errorPlayingAudio", "destructive", { 
-          source: `${lang} (${formattedSrc}) - Error: ${errorMessage}` 
+      console.error(`HTMLAudioElement.onerror - Event:`, e, `\nCode: ${errorDetails?.code}`, `\nMessage: ${errorMessage}`, `\nSrc: "${finalSrcPath}"`, `\nLang: ${lang}`);
+      showNotification("errorPlayingAudio", "destructive", {
+          source: `${lang} (${finalSrcPath}) - Error: ${errorMessage}`
       });
       if (playRequestCounterRef.current === playId) {
         setIsAudioPlaying(false);
         setCurrentAudioSrcType(null);
-        onEndCallback(); 
+        onEndCallback();
       }
     };
 
@@ -360,10 +368,10 @@ export default function LinguaLeapPage() {
     sentenceToPlay?: Sentence,
     isPartOfContinuousSequence: boolean = false
   ) => {
-    stopAudio(); 
-    const currentPlayId = playRequestCounterRef.current; 
+    stopAudio();
+    const currentPlayId = playRequestCounterRef.current;
 
-    await new Promise(resolve => setTimeout(resolve, 50)); 
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     if (playRequestCounterRef.current !== currentPlayId) {
       console.log(`Audio sequence ${currentPlayId} became stale before starting. Active: ${playRequestCounterRef.current}.`);
@@ -375,7 +383,7 @@ export default function LinguaLeapPage() {
       console.log(`PlayAudioSequence (ID ${currentPlayId}): No sentence to play.`);
       if (isPartOfContinuousSequence && isContinuousPlayingRef.current) {
          setTimeout(() => {
-          if(playRequestCounterRef.current === currentPlayId) { 
+          if(playRequestCounterRef.current === currentPlayId) {
              handleSequenceEndLogicRef.current?.()
           }
         }, 50);
@@ -398,13 +406,13 @@ export default function LinguaLeapPage() {
       primaryLang = 'fr';
       secondaryAudioSrc = sentence.audioSrcAl;
       secondaryLang = 'al';
-    } else { 
+    } else {
       primaryAudioSrc = sentence.audioSrcFr;
       primaryLang = 'fr';
       secondaryAudioSrc = sentence.audioSrcEn;
       secondaryLang = 'en';
     }
-    
+
     const playPrimary = () => {
       if (!primaryAudioSrc) {
         console.log(`PlayAudioSequence (ID ${currentPlayId}): No primary audio source for ${primaryLang}.`);
@@ -448,7 +456,7 @@ export default function LinguaLeapPage() {
               setCurrentAudioSrcType(null);
               handleSequenceEndLogicRef.current?.();
             });
-          }, 500); 
+          }, 500);
         } else {
           console.log(`PlayAudioSequence (ID ${currentPlayId}): Primary ended, no secondary. Setting audio to not playing.`);
           setIsAudioPlaying(false);
@@ -465,14 +473,14 @@ export default function LinguaLeapPage() {
 
   useEffect(() => {
     const handleSequenceEndLogicInternal = () => {
-      const currentTriggeringPlayId = playRequestCounterRef.current; 
+      const currentTriggeringPlayId = playRequestCounterRef.current;
       console.log(`handleSequenceEndLogicInternal called, triggered by playId completion related to ${currentTriggeringPlayId}`);
 
       if (isLoopingRef.current && !isContinuousPlayingRef.current) {
         setTimeout(() => {
           if (playRequestCounterRef.current === currentTriggeringPlayId && isLoopingRef.current && !isContinuousPlayingRef.current) {
             console.log(`Looping: Replay for original playId ${currentTriggeringPlayId}. Calling playAudioSequence.`);
-            playAudioSequence(); 
+            playAudioSequence();
           } else {
              console.log(`Looping: Replay skipped. currentRef: ${playRequestCounterRef.current} vs trigger: ${currentTriggeringPlayId}, isLooping: ${isLoopingRef.current}, isContinuous: ${isContinuousPlayingRef.current}`);
           }
@@ -480,7 +488,7 @@ export default function LinguaLeapPage() {
       } else if (isContinuousPlayingRef.current) {
         const nextIndex = continuousPlayCurrentIndexRef.current + 1;
         if (nextIndex < currentChunkSentencesRef.current.length) {
-          setCurrentSentenceIndex(nextIndex); 
+          setCurrentSentenceIndex(nextIndex);
           continuousPlayCurrentIndexRef.current = nextIndex;
           setTimeout(() => {
             if (playRequestCounterRef.current === currentTriggeringPlayId && isContinuousPlayingRef.current) {
@@ -511,9 +519,9 @@ export default function LinguaLeapPage() {
 
   const togglePlayPause = useCallback(() => {
     if (isPlayButtonDisabled) return;
-    
+
     setIsPlayButtonDisabled(true);
-    
+
     if (isAudioPlayingRef.current) {
       console.log("TogglePlayPause: Stopping audio.");
       stopAudio();
@@ -531,11 +539,11 @@ export default function LinguaLeapPage() {
       }
 
     }
-  }, [playAudioSequence, stopAudio, showNotification, stopContinuousPlay]);
+  }, [isPlayButtonDisabled, playAudioSequence, stopAudio, showNotification, stopContinuousPlay]);
 
 
   const handlePrevSentence = () => {
-    if (isContinuousPlayingRef.current) stopContinuousPlay(); 
+    if (isContinuousPlayingRef.current) stopContinuousPlay();
     else stopAudio();
 
     if (currentSentenceIndexRef.current > 0) {
@@ -546,7 +554,7 @@ export default function LinguaLeapPage() {
   };
 
   const handleNextSentence = () => {
-     if (isContinuousPlayingRef.current) stopContinuousPlay(); 
+     if (isContinuousPlayingRef.current) stopContinuousPlay();
      else stopAudio();
 
     if (currentSentenceIndexRef.current < currentChunkSentencesRef.current.length - 1) {
@@ -565,25 +573,25 @@ export default function LinguaLeapPage() {
     if (isContinuousPlayingRef.current) {
         setIsAnswerRevealed(true);
     }
-  }, [currentSentenceIndex, studyMode]); 
+  }, [currentSentenceIndex, studyMode]);
 
 
   const handleRevealAnswer = () => {
     setIsAnswerRevealed(true);
     const sentence = currentChunkSentencesRef.current[currentSentenceIndexRef.current];
     if (!isAudioPlayingRef.current && sentence) {
-      playAudioSequence(); 
+      playAudioSequence();
     }
   };
 
   const handlePlayAllChunkAudio = () => {
     if (currentChunkSentencesRef.current.length > 0) {
-      stopAudio(); 
+      stopAudio();
       setIsContinuousPlaying(true);
-      isContinuousPlayingRef.current = true; 
+      isContinuousPlayingRef.current = true;
       continuousPlayCurrentIndexRef.current = 0;
-      setCurrentSentenceIndex(0); 
-      setIsAnswerRevealed(true); 
+      setCurrentSentenceIndex(0);
+      setIsAnswerRevealed(true);
       setTimeout(() => playAudioSequence(currentChunkSentencesRef.current[0], true), 100);
       showNotification("startingContinuousPlay");
     } else {
@@ -609,7 +617,7 @@ export default function LinguaLeapPage() {
       </div>
     );
   }
-  
+
   const mainContentLayout = "mt-8 space-y-10 md:space-y-12";
 
   return (
