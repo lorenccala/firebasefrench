@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,99 +9,99 @@ body {
 
 @layer base {
   :root {
-    --background: 240 10% 97%; /* Very light cool gray */
-    --foreground: 240 10% 20%; /* Dark gray for text */
+    --background: 38 50% 96%; /* Very light Apple Core / Off-white */
+    --foreground: 216 10% 25%; /* Darker muted Blueberry for text */
 
-    --muted: 240 10% 92%;
-    --muted-foreground: 240 10% 45%;
+    --muted: 38 42% 90%; /* Lighter Apple Core */
+    --muted-foreground: 216 10% 45%; /* Muted Blueberry for less important text */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 20%;
+    --popover-foreground: 216 10% 25%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 20%;
+    --card-foreground: 216 10% 25%;
 
-    --border: 240 10% 88%;
-    --input: 240 10% 90%;
+    --border: 38 42% 85%; /* Slightly darker Apple Core */
+    --input: 38 42% 88%; /* Similar to border or slightly lighter */
 
-    --primary: 265 65% 60%; /* Vibrant Purple */
+    --primary: 29 93% 58%; /* Apricot */
     --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 265 60% 90%; /* Very Light Lavender (for progress track, etc.) */
-    --secondary-foreground: 265 50% 50%; /* Darker purple text for elements on secondary bg */
+    --secondary: 216 14% 52%; /* Blueberry */
+    --secondary-foreground: 0 0% 100%; /* White */
 
-    --accent: 265 60% 75%; /* Light Purple for hovers/accents */
-    --accent-foreground: 265 50% 30%; /* Dark purple text on accent */
+    --accent: 45 92% 58%; /* Citrus */
+    --accent-foreground: 29 50% 25%; /* Dark Apricot/Brown for contrast on yellow */
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 265 65% 55%; /* Vibrant purple, slightly darker for ring */
+    --ring: 29 93% 53%; /* Slightly darker Apricot for focus */
 
     --radius: 0.5rem;
 
-    /* Sidebar specific colors */
-    --sidebar-background: 240 10% 95%;
-    --sidebar-foreground: 240 10% 20%;
-    --sidebar-primary: 265 65% 60%;
+    /* Sidebar specific colors - will mirror main theme */
+    --sidebar-background: 38 50% 96%;
+    --sidebar-foreground: 216 10% 25%;
+    --sidebar-primary: 29 93% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 265 60% 90%;
-    --sidebar-accent-foreground: 265 50% 50%;
-    --sidebar-border: 240 10% 88%;
-    --sidebar-ring: 265 65% 55%;
+    --sidebar-accent: 45 92% 58%;
+    --sidebar-accent-foreground: 29 50% 25%;
+    --sidebar-border: 38 42% 85%;
+    --sidebar-ring: 29 93% 53%;
 
-    --chart-1: 265 65% 60%; /* Primary Purple */
-    --chart-2: 200 60% 55%; /* Blue */
-    --chart-3: 330 60% 65%; /* Pink/Magenta */
-    --chart-4: 160 50% 50%; /* Teal */
-    --chart-5: 30 70% 60%;  /* Orange */
+    --chart-1: 29 93% 58%;   /* Apricot */
+    --chart-2: 216 14% 52%;  /* Blueberry */
+    --chart-3: 45 92% 58%;   /* Citrus */
+    --chart-4: 29 93% 75%;   /* Lighter Apricot */
+    --chart-5: 216 14% 70%;  /* Lighter Blueberry */
   }
 
   .dark {
-    --background: 240 15% 10%; /* Dark cool gray */
-    --foreground: 240 10% 85%; /* Light gray text */
+    --background: 216 15% 10%; /* Very dark Blueberry */
+    --foreground: 38 30% 88%; /* Light Apple Core for text */
 
-    --muted: 240 15% 18%;
-    --muted-foreground: 240 10% 55%;
+    --muted: 216 10% 20%; /* Darker muted Blueberry */
+    --muted-foreground: 216 10% 55%; /* Lighter muted Blueberry */
 
-    --popover: 240 15% 8%;
-    --popover-foreground: 240 10% 85%;
+    --popover: 216 15% 8%;
+    --popover-foreground: 38 30% 88%;
 
-    --card: 240 15% 12%;
-    --card-foreground: 240 10% 85%;
+    --card: 216 15% 12%;
+    --card-foreground: 38 30% 88%;
 
-    --border: 240 10% 25%;
-    --input: 240 10% 28%;
+    --border: 216 10% 25%;
+    --input: 216 10% 28%;
 
-    --primary: 265 65% 68%; /* Vibrant Purple for dark mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 29 93% 65%; /* Brighter Apricot */
+    --primary-foreground: 29 50% 15%; /* Very dark Apricot/Brown */
 
-    --secondary: 265 50% 82%; /* Lighter purple for secondary elements in dark (e.g., progress track) */
-    --secondary-foreground: 265 50% 30%; 
+    --secondary: 216 14% 35%; /* Dark mode Blueberry */
+    --secondary-foreground: 38 30% 88%; /* Light Apple Core */
 
-    --accent: 265 60% 60%;   /* Purple accent for dark mode */
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 92% 65%; /* Brighter Citrus */
+    --accent-foreground: 29 50% 15%; /* Very dark Apricot/Brown */
 
     --destructive: 0 63% 40%;
     --destructive-foreground: 0 0% 98%;
 
-    --ring: 265 65% 60%;
+    --ring: 29 93% 60%;
     
-    /* Sidebar specific colors - dark mode */
-    --sidebar-background: 240 15% 12%;
-    --sidebar-foreground: 240 10% 85%;
-    --sidebar-primary: 265 65% 68%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 265 50% 82%;
-    --sidebar-accent-foreground: 265 50% 30%;
-    --sidebar-border: 240 10% 25%;
-    --sidebar-ring: 265 65% 60%;
+    /* Sidebar specific colors - dark mode - will mirror main theme */
+    --sidebar-background: 216 15% 10%;
+    --sidebar-foreground: 38 30% 88%;
+    --sidebar-primary: 29 93% 65%;
+    --sidebar-primary-foreground: 29 50% 15%;
+    --sidebar-accent: 45 92% 65%;
+    --sidebar-accent-foreground: 29 50% 15%;
+    --sidebar-border: 216 10% 25%;
+    --sidebar-ring: 29 93% 60%;
 
-    --chart-1: 265 65% 70%; 
-    --chart-2: 200 60% 65%; 
-    --chart-3: 330 60% 75%; 
-    --chart-4: 160 50% 60%; 
-    --chart-5: 30 70% 70%;  
+    --chart-1: 29 93% 65%;   /* Apricot */
+    --chart-2: 216 14% 60%;  /* Blueberry */
+    --chart-3: 45 92% 65%;   /* Citrus */
+    --chart-4: 29 93% 80%;   /* Lighter Apricot */
+    --chart-5: 216 14% 75%;  /* Lighter Blueberry */
   }
 }
 
@@ -131,3 +132,5 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary));
 }
+
+    
