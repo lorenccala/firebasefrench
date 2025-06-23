@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sentence, StudyMode } from '@/types';
 import { PLAYBACK_SPEEDS, DEFAULT_CHUNK_SIZE, DEFAULT_PRACTICE_TIME_MINUTES } from '@/lib/constants';
 import { useTimer } from '@/hooks/use-timer';
-import { useToast } from '@/hooks/use-toast';
+
 import { translations, type Language } from '@/lib/translations';
 
 import ControlsSection from '@/components/app/ControlsSection';
@@ -54,7 +54,7 @@ export default function ProntoLingoPage() {
   const [error, setError] = useState<string | null>(null);
   const [isPlayButtonDisabled, setIsPlayButtonDisabled] = useState(false);
 
-  const { toast } = useToast();
+
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
@@ -118,18 +118,8 @@ export default function ProntoLingoPage() {
   }, [currentLanguage]);
 
   const showNotification = useCallback((messageKey: keyof typeof translations, variant: "default" | "destructive" = "default", params?: Record<string, string | number>) => {
-    let message = translations[messageKey]?.[currentLanguage] ?? String(messageKey);
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        message = message.replace(`{${key}}`, String(value));
-      });
-    }
-    toast({
-      title: variant === "destructive" ? t('errorTitle') : t('notificationTitle'),
-      description: message,
-      variant: variant,
-    });
-  }, [toast, t, currentLanguage]);
+    // Notifications disabled by user request
+  }, []);
 
   const toggleTheme = () => {
     document.documentElement.classList.toggle('dark');
