@@ -145,5 +145,12 @@ export const translations = {
   sidebarFocusTimer: { en: "Focus Timer", al: "Kohëmatësi" },
   sidebarGrammarExplanation: { en: "Grammar AI", al: "Gramatika AI" },
   sidebarAIFeatures: { en: "AI Features", al: "Veçoritë AI" },
+  
+  // Profile Section
+  userProfile: { en: "User Profile", al: "Profili i Përdoruesit" },
+  language: { en: "Language", al: "Gjuha" },
+  theme: { en: "Theme", al: "Tema" },
+  totalSentences: { en: "Total Sentences", al: "Gjithsej Fjali" },
+  currentProgress: { en: "Current Progress", al: "Progresi Aktual" },
 };
     

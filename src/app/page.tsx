@@ -135,6 +135,25 @@ export default function ProntoLingoPage() {
     document.documentElement.classList.toggle('dark');
   };
 
+  useEffect(() => {
+    audioRef.current = new Audio();
+    audioRef.current.playbackRate = playbackSpeed; 
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute('src');
+        audioRef.current.oncanplaythrough = null;
+        audioRef.current.onended = null;
+        audioRef.current.onerror = null;
+      }
+      audioRef.current = null;
+      if (audioSequenceDelayTimeoutRef.current) {
+        clearTimeout(audioSequenceDelayTimeoutRef.current);
+      }
+    };
+  }, []); 
+
   const loadSentenceData = useCallback(async () => {
     setIsInitialLoading(true);
     setError(null);
@@ -850,6 +869,26 @@ export default function ProntoLingoPage() {
                 </div>
               )}
             </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher
+              currentLanguage={currentLanguage}
+              onLanguageChange={(lang) => {
+                stopAudio(); 
+                setCurrentLanguage(lang);
+              }}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="h-8 w-8 p-0"
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
           </div>
         </div>
       </div>
