@@ -16,23 +16,13 @@ import FillInTheBlanksGame from '@/components/app/FillInTheBlanksGame';
 import NativeContentSwitchSection from '@/components/app/NativeContentSwitchSection';
 import Footer from '@/components/app/Footer';
 import LanguageSwitcher from '@/components/app/LanguageSwitcher';
-import Header from '@/components/app/Header';
+import AISentenceGenerator from '@/components/app/AISentenceGenerator';
+import AIProgressDashboard from '@/components/app/AIProgressDashboard';
 import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb, UserCircle, PencilLine, BookOpen, Sparkles } from 'lucide-react'; 
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb, UserCircle, PencilLine, BookOpen, Sparkles, Brain, Wand2, Languages, User, Moon, Sun, Home } from 'lucide-react'; 
 import GrammarExplainer from '@/components/app/GrammarExplainer';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarTrigger,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  SidebarInset,
-} from '@/components/ui/sidebar';
 
 interface RawSentenceDataFromFile {
   id: string;
@@ -47,7 +37,7 @@ interface RawSentenceDataFromFile {
   audioSrcAl?: string;
 }
 
-type ActiveSection = 'config' | 'study' | 'flashcards' | 'builder' | 'fillblanks' | 'timer' | 'grammar';
+type ActiveSection = 'study' | 'games' | 'ai' | 'settings' | 'profile';
 
 export default function ProntoLingoPage() {
   const [allSentences, setAllSentences] = useState<Sentence[]>([]);
@@ -78,6 +68,7 @@ export default function ProntoLingoPage() {
   const continuousPlayCurrentIndexRef = useRef<number>(0);
   const [currentLanguage, setCurrentLanguage] = useState<Language>('en');
   const [activeSection, setActiveSection] = useState<ActiveSection>('study');
+  const [gameMode, setGameMode] = useState<'flashcards' | 'builder' | 'fillblanks' | 'grammar'>('flashcards');
 
   const {
     timerSeconds,
@@ -116,7 +107,6 @@ export default function ProntoLingoPage() {
   useEffect(() => { isContinuousPlayingRef.current = isContinuousPlaying; }, [isContinuousPlaying]);
   useEffect(() => { isLoopingRef.current = isLooping; }, [isLooping]);
 
-
   const t = useCallback((key: keyof typeof translations, params?: Record<string, string | number>) => {
     let text = translations[key]?.[currentLanguage] ?? String(key);
     if (params) {
@@ -141,34 +131,9 @@ export default function ProntoLingoPage() {
     });
   }, [toast, t, currentLanguage]);
 
-
-  useEffect(() => {
-    audioRef.current = new Audio();
-    audioRef.current.playbackRate = playbackSpeed; 
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.removeAttribute('src');
-        audioRef.current.oncanplaythrough = null;
-        audioRef.current.onended = null;
-        audioRef.current.onerror = null;
-      }
-      audioRef.current = null;
-      if (audioSequenceDelayTimeoutRef.current) {
-        clearTimeout(audioSequenceDelayTimeoutRef.current);
-      }
-    };
-  }, []); 
-
-  useEffect(() => {
-    if (studyMode === StudyMode.ActiveRecall && !isContinuousPlayingRef.current) {
-      setIsAnswerRevealed(false);
-    } else {
-      setIsAnswerRevealed(true);
-    }
-  }, [studyMode]);
-
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle('dark');
+  };
 
   const loadSentenceData = useCallback(async () => {
     setIsInitialLoading(true);
@@ -283,7 +248,6 @@ export default function ProntoLingoPage() {
   useEffect(() => {
     if (!isInitialLoading) applyChunkSettings();
   }, [selectedChunkNum, chunkSize, isInitialLoading, allSentences.length, applyChunkSettings]);
-
 
   const playAudioFile = useCallback((
     originalSrc: string | undefined,
@@ -666,34 +630,12 @@ export default function ProntoLingoPage() {
       </div>
     );
   }
-  
-  const mainContentLayout = "p-4 sm:p-6 lg:p-8";
 
   const renderActiveSection = () => {
     switch (activeSection) {
-      case 'config':
-        return (
-          <ControlsSection
-            language={currentLanguage}
-            studyMode={studyMode}
-            onStudyModeChange={(newMode) => {
-              if (isContinuousPlayingRef.current) stopContinuousPlay();
-              else stopAudio();
-              setStudyMode(newMode);
-            }}
-            chunkSize={chunkSize}
-            onChunkSizeChange={setChunkSize}
-            selectedChunkNum={selectedChunkNum}
-            onSelectedChunkNumChange={setSelectedChunkNum}
-            numChunks={numChunks}
-            onLoadChunk={applyChunkSettings}
-            allSentencesCount={allSentences.length}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)}
-          />
-        );
       case 'study':
         return (
-          <>
+          <div className="space-y-6">
             <StudyArea
               language={currentLanguage}
               sentence={currentSentenceData}
@@ -706,11 +648,9 @@ export default function ProntoLingoPage() {
                 onPrev: handlePrevSentence,
                 onNext: handleNextSentence,
                 isLooping: isLooping,
-                onToggleLoop: () => setIsLooping(prev => !prev),
+                onToggleLoop: () => setIsLooping(!isLooping),
                 playbackSpeed: playbackSpeed,
-                onPlaybackSpeedChange: (speed) => {
-                  setPlaybackSpeed(speed); 
-                },
+                onPlaybackSpeedChange: setPlaybackSpeed,
                 disablePrev: currentSentenceIndex === 0,
                 disableNext: currentSentenceIndex >= currentChunkSentences.length - 1,
               }}
@@ -726,67 +666,156 @@ export default function ProntoLingoPage() {
               language={currentLanguage}
               isPlaying={isContinuousPlaying}
               onPlayAll={handlePlayAllChunkAudio}
-              onStop={stopContinuousPlay} 
+              onStop={stopContinuousPlay}
               disabled={currentChunkSentences.length === 0 || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
               currentSentenceIndex={isContinuousPlaying ? continuousPlayCurrentIndexRef.current : -1} 
               totalSentencesInChunk={currentChunkSentences.length}
               isLoadingChunk={isChunkLoading || (isInitialLoading && allSentences.length === 0)} 
             />
-          </>
+          </div>
         );
-      case 'flashcards':
-        return (
-          <FlashcardGame
-            language={currentLanguage}
-            sentences={currentChunkSentences}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
-          />
-        );
-      case 'builder':
-        return (
-          <SentenceBuilderGame
-            language={currentLanguage}
-            sentence={currentSentenceData}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
-            onNextSentence={handleNextSentence}
-            onPrevSentence={handlePrevSentence}
-            currentSentenceIndex={currentSentenceIndex}
-            totalSentencesInChunk={currentChunkSentences.length}
-          />
-        );
-      case 'fillblanks':
-        return (
-          <FillInTheBlanksGame
-            language={currentLanguage}
-            sentence={currentSentenceData}
-            isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
-            onNextSentence={handleNextSentence}
-            onPrevSentence={handlePrevSentence}
-            currentSentenceIndex={currentSentenceIndex}
-            totalSentencesInChunk={currentChunkSentences.length}
-          />
-        );
-      case 'timer':
-        return (
-          <NativeContentSwitchSection
-            language={currentLanguage}
-            practiceTimeMinutes={practiceTimeMinutes}
-            onPracticeTimeChange={setPracticeTimeMinutes}
-            onStartTimer={startTimer}
-            timerDisplay={formatTime(timerSeconds)}
-            isTimerRunning={isTimerRunning}
-            showSwitchToNativeAlert={showSwitchToNativeAlert}
-            onHideAlert={resetTimerAlert}
-          />
-        );
-      case 'grammar':
-        return (
-           <div className="max-w-2xl mx-auto">
-            <GrammarExplainer
+      case 'games':
+        if (gameMode === 'flashcards') {
+          return (
+            <FlashcardGame
+              language={currentLanguage}
+              sentences={currentChunkSentences}
+              isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+            />
+          );
+        } else if (gameMode === 'builder') {
+          return (
+            <SentenceBuilderGame
               language={currentLanguage}
               sentence={currentSentenceData}
-              disabled={!currentSentenceData || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+              isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+              onNextSentence={handleNextSentence}
+              onPrevSentence={handlePrevSentence}
+              currentSentenceIndex={currentSentenceIndex}
+              totalSentencesInChunk={currentChunkSentences.length}
             />
+          );
+        } else if (gameMode === 'fillblanks') {
+          return (
+            <FillInTheBlanksGame
+              language={currentLanguage}
+              sentence={currentSentenceData}
+              isLoading={isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+              onNextSentence={handleNextSentence}
+              onPrevSentence={handlePrevSentence}
+              currentSentenceIndex={currentSentenceIndex}
+              totalSentencesInChunk={currentChunkSentences.length}
+            />
+          );
+        } else if (gameMode === 'grammar') {
+          return (
+            <div className="max-w-2xl mx-auto">
+              <GrammarExplainer
+                language={currentLanguage}
+                sentence={currentSentenceData}
+                disabled={!currentSentenceData || isChunkLoading || (isInitialLoading && allSentences.length === 0)}
+              />
+            </div>
+          );
+        }
+        break;
+      case 'ai':
+        return (
+          <div className="space-y-8">
+            <AISentenceGenerator
+              language={currentLanguage}
+              onSentencesGenerated={(sentences) => {
+                console.log('Generated sentences:', sentences);
+              }}
+            />
+            <AIProgressDashboard
+              language={currentLanguage}
+              userProgress={{
+                correctAnswers: 0,
+                totalAttempts: 0,
+                strugglingVerbs: [],
+                strongVerbs: [],
+                studyTimeMinutes: timerSeconds / 60,
+                preferredDifficulty: 'beginner' as const,
+              }}
+            />
+          </div>
+        );
+      case 'settings':
+        return (
+          <div className="space-y-6">
+            <ControlsSection
+              language={currentLanguage}
+              studyMode={studyMode}
+              onStudyModeChange={(newMode) => {
+                if (isContinuousPlayingRef.current) stopContinuousPlay();
+                else stopAudio();
+                setStudyMode(newMode);
+              }}
+              chunkSize={chunkSize}
+              onChunkSizeChange={setChunkSize}
+              selectedChunkNum={selectedChunkNum}
+              onSelectedChunkNumChange={setSelectedChunkNum}
+              numChunks={numChunks}
+              onLoadChunk={applyChunkSettings}
+              allSentencesCount={allSentences.length}
+              isLoading={isChunkLoading || (isInitialLoading && allSentences.length > 0)}
+            />
+            <NativeContentSwitchSection
+              language={currentLanguage}
+              practiceTimeMinutes={practiceTimeMinutes}
+              onPracticeTimeChange={setPracticeTimeMinutes}
+              onStartTimer={startTimer}
+              timerDisplay={formatTime(timerSeconds)}
+              isTimerRunning={isTimerRunning}
+              showSwitchToNativeAlert={showSwitchToNativeAlert}
+              onHideAlert={resetTimerAlert}
+            />
+          </div>
+        );
+      case 'profile':
+        return (
+          <div className="max-w-md mx-auto space-y-6">
+            <div className="text-center space-y-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-primary via-secondary to-accent rounded-full mx-auto flex items-center justify-center">
+                <User className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold">{t('userProfile')}</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-card rounded-xl border">
+                <span className="font-medium">{t('language')}</span>
+                <LanguageSwitcher
+                  currentLanguage={currentLanguage}
+                  onLanguageChange={setCurrentLanguage}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-card rounded-xl border">
+                <span className="font-medium">{t('theme')}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleTheme}
+                  className="h-8 w-8 p-0"
+                >
+                  <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                  <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                </Button>
+              </div>
+              
+              <div className="p-4 bg-card rounded-xl border space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">{t('totalSentences')}</span>
+                  <span className="font-medium">{allSentences.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">{t('currentProgress')}</span>
+                  <span className="font-medium">{Math.round((currentSentenceIndex + 1) / Math.max(currentChunkSentences.length, 1) * 100)}%</span>
+                </div>
+              </div>
+            </div>
           </div>
         );
       default:
@@ -795,168 +824,140 @@ export default function ProntoLingoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {/* Enhanced Header */}
-      <Header 
-        language={currentLanguage}
-        onLanguageChange={(lang) => {
-          stopAudio(); 
-          setCurrentLanguage(lang);
-        }}
-        totalSentences={allSentences.length}
-        studyStreak={0} // You can add streak tracking later
-      />
-      
-      <SidebarProvider>
-        <Sidebar className="border-r border-border/50 bg-card/30 backdrop-blur-md">
-          <SidebarHeader className="border-b border-border/50">
-            <div className="flex items-center gap-3 p-4">
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary via-secondary to-accent rounded-xl flex items-center justify-center shadow-lg">
-                  <BookOpen className="h-5 w-5 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center">
-                  <Sparkles className="h-2.5 w-2.5 text-white" />
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 pb-20">
+      {/* App Header */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/40">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary via-secondary to-accent rounded-xl flex items-center justify-center shadow-lg">
+                <BookOpen className="h-6 w-6 text-white" />
               </div>
-              <div className="flex-1">
-                <h2 className="text-lg font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                  {t('appTitle')}
-                </h2>
-                <p className="text-xs text-muted-foreground">Learning Hub</p>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center">
+                <Sparkles className="h-2.5 w-2.5 text-white" />
               </div>
-              <SidebarTrigger className="md:hidden" />
             </div>
-          </SidebarHeader>
-          
-          <SidebarContent className="p-2">
-            <SidebarMenu className="space-y-2">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection('study')}
-                  isActive={activeSection === 'study'}
-                  tooltip={t('studyZoneTitle')}
-                  className={`nav-item transition-all duration-200 ${activeSection === 'study' ? 'active' : ''}`}
-                >
-                  <NotebookPen className="h-5 w-5" />
-                  <span className="font-medium">{t('studyZoneTitle')}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection('config')}
-                  isActive={activeSection === 'config'}
-                  tooltip={t('studyConfigurationTitle')}
-                  className={`nav-item transition-all duration-200 ${activeSection === 'config' ? 'active' : ''}`}
-                >
-                  <Settings className="h-5 w-5" />
-                  <span className="font-medium">{t('studyConfigurationTitle')}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection('flashcards')}
-                  isActive={activeSection === 'flashcards'}
-                  tooltip={t('flashcardGameTitle')}
-                  className={`nav-item transition-all duration-200 ${activeSection === 'flashcards' ? 'active' : ''}`}
-                >
-                  <Zap className="h-5 w-5" />
-                  <span className="font-medium">{t('flashcardGameTitle')}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection('builder')}
-                  isActive={activeSection === 'builder'}
-                  tooltip={t('sentenceBuilderTitle')}
-                  className={`nav-item transition-all duration-200 ${activeSection === 'builder' ? 'active' : ''}`}
-                >
-                  <Dices className="h-5 w-5" />
-                  <span className="font-medium">{t('sentenceBuilderTitle')}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection('fillblanks')}
-                  isActive={activeSection === 'fillblanks'}
-                  tooltip={t('fillInTheBlanksTitle')}
-                  className={`nav-item transition-all duration-200 ${activeSection === 'fillblanks' ? 'active' : ''}`}
-                >
-                  <PencilLine className="h-5 w-5" />
-                  <span className="font-medium">{t('fillInTheBlanksTitle')}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection('grammar')}
-                  isActive={activeSection === 'grammar'}
-                  tooltip={t('grammarExplanationTitle')} 
-                  className={`nav-item transition-all duration-200 ${activeSection === 'grammar' ? 'active' : ''}`}
-                >
-                  <Lightbulb className="h-5 w-5" />
-                  <span className="font-medium">{t('grammarExplanationTitle')}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveSection('timer')}
-                  isActive={activeSection === 'timer'}
-                  tooltip={t('focusTimerTitle')}
-                  className={`nav-item transition-all duration-200 ${activeSection === 'timer' ? 'active' : ''}`}
-                >
-                  <TimerIcon className="h-5 w-5" />
-                  <span className="font-medium">{t('focusTimerTitle')}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-          
-          <SidebarFooter className="border-t border-border/50 p-4">
-            <div className="text-xs text-muted-foreground text-center mb-2">
-              Progress: {Math.round((currentSentenceIndex + 1) / Math.max(currentChunkSentences.length, 1) * 100)}%
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden mb-3">
-              <div 
-                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
-                style={{ width: `${Math.round((currentSentenceIndex + 1) / Math.max(currentChunkSentences.length, 1) * 100)}%` }}
-              />
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-        
-        <SidebarInset className="bg-transparent">
-          {/* Mobile Header */}
-          <div className="sticky top-16 z-10 flex h-14 items-center gap-2 border-b border-border/40 bg-background/95 px-4 backdrop-blur-sm md:hidden">
-            <SidebarTrigger className="hover:bg-primary/10 hover:text-primary transition-colors">
-              <PanelLeft className="h-5 w-5" />
-            </SidebarTrigger>
-            <span className="text-lg font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              {t(
-                activeSection === 'config' ? 'studyConfigurationTitle' :
-                activeSection === 'study' ? 'studyZoneTitle' :
-                activeSection === 'flashcards' ? 'flashcardGameTitle' :
-                activeSection === 'builder' ? 'sentenceBuilderTitle' :
-                activeSection === 'fillblanks' ? 'fillInTheBlanksTitle' :
-                activeSection === 'grammar' ? 'grammarExplanationTitle' :
-                'focusTimerTitle' 
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                {t('appTitle')}
+              </h1>
+              {allSentences.length > 0 && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">
+                    <Languages className="h-3 w-3 mr-1" />
+                    {allSentences.length} Sentences
+                  </Badge>
+                </div>
               )}
-            </span>
-          </div>
-          
-          <div className={`${mainContentLayout} animate-fade-in-scale`}>
-            <div className="space-y-6 md:space-y-8">
-              {renderActiveSection()}
-              <Footer language={currentLanguage} />
             </div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
+        </div>
+      </div>
+
+      {/* Game Mode Selector for Games Section */}
+      {activeSection === 'games' && (
+        <div className="sticky top-[73px] z-30 bg-background/95 backdrop-blur-sm border-b border-border/40">
+          <div className="flex gap-2 p-4 overflow-x-auto">
+            <Button
+              variant={gameMode === 'flashcards' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGameMode('flashcards')}
+              className="whitespace-nowrap"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              {t('flashcardGameTitle')}
+            </Button>
+            <Button
+              variant={gameMode === 'builder' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGameMode('builder')}
+              className="whitespace-nowrap"
+            >
+              <Dices className="h-4 w-4 mr-2" />
+              {t('sentenceBuilderTitle')}
+            </Button>
+            <Button
+              variant={gameMode === 'fillblanks' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGameMode('fillblanks')}
+              className="whitespace-nowrap"
+            >
+              <PencilLine className="h-4 w-4 mr-2" />
+              {t('fillInTheBlanksTitle')}
+            </Button>
+            <Button
+              variant={gameMode === 'grammar' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGameMode('grammar')}
+              className="whitespace-nowrap"
+            >
+              <Lightbulb className="h-4 w-4 mr-2" />
+              {t('grammarExplanationTitle')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="p-4 space-y-6">
+        {renderActiveSection()}
+        <Footer language={currentLanguage} />
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border/40">
+        <div className="flex items-center justify-around p-2">
+          <Button
+            variant={activeSection === 'study' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveSection('study')}
+            className="flex-col h-auto py-2 px-3"
+          >
+            <NotebookPen className="h-5 w-5 mb-1" />
+            <span className="text-xs">{t('studyZoneTitle')}</span>
+          </Button>
+          
+          <Button
+            variant={activeSection === 'games' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveSection('games')}
+            className="flex-col h-auto py-2 px-3"
+          >
+            <Zap className="h-5 w-5 mb-1" />
+            <span className="text-xs">Games</span>
+          </Button>
+          
+          <Button
+            variant={activeSection === 'ai' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveSection('ai')}
+            className="flex-col h-auto py-2 px-3"
+          >
+            <Brain className="h-5 w-5 mb-1" />
+            <span className="text-xs">AI</span>
+          </Button>
+          
+          <Button
+            variant={activeSection === 'settings' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveSection('settings')}
+            className="flex-col h-auto py-2 px-3"
+          >
+            <Settings className="h-5 w-5 mb-1" />
+            <span className="text-xs">{t('studyConfigurationTitle')}</span>
+          </Button>
+          
+          <Button
+            variant={activeSection === 'profile' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveSection('profile')}
+            className="flex-col h-auto py-2 px-3"
+          >
+            <User className="h-5 w-5 mb-1" />
+            <span className="text-xs">Profile</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -111,6 +111,30 @@ export const translations = {
   fillInBlanksVerbNotFoundInSentence: {en: "Could not find the main verb in this sentence to create a blank. Please try another sentence.", al: "Nuk u gjet folja kryesore në këtë fjali për të krijuar një boshllëk. Ju lutem provoni një fjali tjetër."},
   fillInBlanksCannotProcessSentence: {en: "Cannot create a fill-in-the-blank challenge for this sentence. It might be empty or formatted in an unexpected way.", al: "Nuk mund të krijohet një sfidë plotëso-boshllëqet për këtë fjali. Mund të jetë bosh ose e formatuar në një mënyrë të papritur."},
 
+  // AI Features
+  aiSentenceGeneratorTitle: { en: "AI Sentence Generator", al: "Gjeneratori AI i Fjalive" },
+  aiSentenceGeneratorDescription: { en: "Generate personalized French practice sentences using AI", al: "Gjeneroni fjali praktike frënge të personalizuara duke përdorur AI" },
+  aiProgressDashboardTitle: { en: "AI Progress Dashboard", al: "Paneli i Progresit AI" },
+  aiProgressDashboardDescription: { en: "Personalized insights powered by artificial intelligence", al: "Njohuri të personalizuara të mundësuara nga inteligjenca artificiale" },
+  aiConversationTitle: { en: "AI Conversation Partner", al: "Partneri i Bisedës AI" },
+  aiConversationDescription: { en: "Practice French conversation with AI", al: "Praktikoni bisedën frënge me AI" },
+  
+  // AI Actions
+  generateSentencesButton: { en: "Generate Sentences", al: "Gjeneroni Fjali" },
+  analyzeProgressButton: { en: "Get AI Analysis", al: "Merrni Analizën AI" },
+  chatWithAIButton: { en: "Start Conversation", al: "Filloni Bisedën" },
+  
+  // AI Status
+  generatingContent: { en: "Generating content...", al: "Duke gjeneruar përmbajtje..." },
+  analyzingProgress: { en: "Analyzing your progress...", al: "Duke analizuar përparimin tuaj..." },
+  aiThinking: { en: "AI is thinking...", al: "AI po mendon..." },
+  
+  // AI Results
+  aiRecommendations: { en: "AI Recommendations", al: "Rekomandimet e AI" },
+  personalizedInsights: { en: "Personalized Insights", al: "Njohuri të Personalizuara" },
+  nextSessionFocus: { en: "Next Session Focus", al: "Fokusi i Sesionit të Ardhshëm" },
+  overallScore: { en: "Overall Score", al: "Rezultati i Përgjithshëm" },
+  
   // Sidebar specific (can reuse some from above)
   sidebarConfiguration: { en: "Configuration", al: "Konfigurimi" },
   sidebarStudyZone: { en: "Study Zone", al: "Zona e Studimit" },
@@ -120,5 +144,6 @@ export const translations = {
   sidebarFillInTheBlanks: { en: "Fill Blanks", al: "Plotëso" },
   sidebarFocusTimer: { en: "Focus Timer", al: "Kohëmatësi" },
   sidebarGrammarExplanation: { en: "Grammar AI", al: "Gramatika AI" },
+  sidebarAIFeatures: { en: "AI Features", al: "Veçoritë AI" },
 };
     
