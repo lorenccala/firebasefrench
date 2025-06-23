@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -17,9 +16,10 @@ import FillInTheBlanksGame from '@/components/app/FillInTheBlanksGame';
 import NativeContentSwitchSection from '@/components/app/NativeContentSwitchSection';
 import Footer from '@/components/app/Footer';
 import LanguageSwitcher from '@/components/app/LanguageSwitcher';
+import Header from '@/components/app/Header';
 import { LoadingSpinner } from '@/components/app/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb, UserCircle, PencilLine } from 'lucide-react'; 
+import { AlertCircle, Settings, NotebookPen, Radio, Zap, Dices, TimerIcon, PanelLeft, Lightbulb, UserCircle, PencilLine, BookOpen, Sparkles } from 'lucide-react'; 
 import GrammarExplainer from '@/components/app/GrammarExplainer';
 import {
   SidebarProvider,
@@ -795,108 +795,149 @@ export default function ProntoLingoPage() {
   };
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2 p-2">
-            <UserCircle className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-primary">{t('appTitle')}</span>
-            <SidebarTrigger className="ml-auto md:hidden" />
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setActiveSection('study')}
-                isActive={activeSection === 'study'}
-                tooltip={t('studyZoneTitle')}
-              >
-                <NotebookPen />
-                <span>{t('studyZoneTitle')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setActiveSection('config')}
-                isActive={activeSection === 'config'}
-                tooltip={t('studyConfigurationTitle')}
-              >
-                <Settings />
-                <span>{t('studyConfigurationTitle')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setActiveSection('flashcards')}
-                isActive={activeSection === 'flashcards'}
-                tooltip={t('flashcardGameTitle')}
-              >
-                <Zap />
-                <span>{t('flashcardGameTitle')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setActiveSection('builder')}
-                isActive={activeSection === 'builder'}
-                tooltip={t('sentenceBuilderTitle')}
-              >
-                <Dices />
-                <span>{t('sentenceBuilderTitle')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setActiveSection('fillblanks')}
-                isActive={activeSection === 'fillblanks'}
-                tooltip={t('fillInTheBlanksTitle')}
-              >
-                <PencilLine />
-                <span>{t('fillInTheBlanksTitle')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setActiveSection('grammar')}
-                isActive={activeSection === 'grammar'}
-                tooltip={t('grammarExplanationTitle')} 
-              >
-                <Lightbulb />
-                <span>{t('grammarExplanationTitle')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setActiveSection('timer')}
-                isActive={activeSection === 'timer'}
-                tooltip={t('focusTimerTitle')}
-              >
-                <TimerIcon />
-                <span>{t('focusTimerTitle')}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-           <div className="p-2">
-            <LanguageSwitcher 
-              currentLanguage={currentLanguage} 
-              onLanguageChange={(lang) => {
-                stopAudio(); 
-                setCurrentLanguage(lang);
-              }} 
-            />
-          </div>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
-           <div className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur-sm md:hidden">
-            <SidebarTrigger>
-              <PanelLeft />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
+      {/* Enhanced Header */}
+      <Header 
+        language={currentLanguage}
+        onLanguageChange={(lang) => {
+          stopAudio(); 
+          setCurrentLanguage(lang);
+        }}
+        totalSentences={allSentences.length}
+        studyStreak={0} // You can add streak tracking later
+      />
+      
+      <SidebarProvider>
+        <Sidebar className="border-r border-border/50 bg-card/30 backdrop-blur-md">
+          <SidebarHeader className="border-b border-border/50">
+            <div className="flex items-center gap-3 p-4">
+              <div className="relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary via-secondary to-accent rounded-xl flex items-center justify-center shadow-lg">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center">
+                  <Sparkles className="h-2.5 w-2.5 text-white" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                  {t('appTitle')}
+                </h2>
+                <p className="text-xs text-muted-foreground">Learning Hub</p>
+              </div>
+              <SidebarTrigger className="md:hidden" />
+            </div>
+          </SidebarHeader>
+          
+          <SidebarContent className="p-2">
+            <SidebarMenu className="space-y-2">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection('study')}
+                  isActive={activeSection === 'study'}
+                  tooltip={t('studyZoneTitle')}
+                  className={`nav-item transition-all duration-200 ${activeSection === 'study' ? 'active' : ''}`}
+                >
+                  <NotebookPen className="h-5 w-5" />
+                  <span className="font-medium">{t('studyZoneTitle')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection('config')}
+                  isActive={activeSection === 'config'}
+                  tooltip={t('studyConfigurationTitle')}
+                  className={`nav-item transition-all duration-200 ${activeSection === 'config' ? 'active' : ''}`}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span className="font-medium">{t('studyConfigurationTitle')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection('flashcards')}
+                  isActive={activeSection === 'flashcards'}
+                  tooltip={t('flashcardGameTitle')}
+                  className={`nav-item transition-all duration-200 ${activeSection === 'flashcards' ? 'active' : ''}`}
+                >
+                  <Zap className="h-5 w-5" />
+                  <span className="font-medium">{t('flashcardGameTitle')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection('builder')}
+                  isActive={activeSection === 'builder'}
+                  tooltip={t('sentenceBuilderTitle')}
+                  className={`nav-item transition-all duration-200 ${activeSection === 'builder' ? 'active' : ''}`}
+                >
+                  <Dices className="h-5 w-5" />
+                  <span className="font-medium">{t('sentenceBuilderTitle')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection('fillblanks')}
+                  isActive={activeSection === 'fillblanks'}
+                  tooltip={t('fillInTheBlanksTitle')}
+                  className={`nav-item transition-all duration-200 ${activeSection === 'fillblanks' ? 'active' : ''}`}
+                >
+                  <PencilLine className="h-5 w-5" />
+                  <span className="font-medium">{t('fillInTheBlanksTitle')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection('grammar')}
+                  isActive={activeSection === 'grammar'}
+                  tooltip={t('grammarExplanationTitle')} 
+                  className={`nav-item transition-all duration-200 ${activeSection === 'grammar' ? 'active' : ''}`}
+                >
+                  <Lightbulb className="h-5 w-5" />
+                  <span className="font-medium">{t('grammarExplanationTitle')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setActiveSection('timer')}
+                  isActive={activeSection === 'timer'}
+                  tooltip={t('focusTimerTitle')}
+                  className={`nav-item transition-all duration-200 ${activeSection === 'timer' ? 'active' : ''}`}
+                >
+                  <TimerIcon className="h-5 w-5" />
+                  <span className="font-medium">{t('focusTimerTitle')}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+          
+          <SidebarFooter className="border-t border-border/50 p-4">
+            <div className="text-xs text-muted-foreground text-center mb-2">
+              Progress: {Math.round((currentSentenceIndex + 1) / Math.max(currentChunkSentences.length, 1) * 100)}%
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden mb-3">
+              <div 
+                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                style={{ width: `${Math.round((currentSentenceIndex + 1) / Math.max(currentChunkSentences.length, 1) * 100)}%` }}
+              />
+            </div>
+          </SidebarFooter>
+        </Sidebar>
+        
+        <SidebarInset className="bg-transparent">
+          {/* Mobile Header */}
+          <div className="sticky top-16 z-10 flex h-14 items-center gap-2 border-b border-border/40 bg-background/95 px-4 backdrop-blur-sm md:hidden">
+            <SidebarTrigger className="hover:bg-primary/10 hover:text-primary transition-colors">
+              <PanelLeft className="h-5 w-5" />
             </SidebarTrigger>
-            <span className="text-lg font-semibold">{t(
+            <span className="text-lg font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              {t(
                 activeSection === 'config' ? 'studyConfigurationTitle' :
                 activeSection === 'study' ? 'studyZoneTitle' :
                 activeSection === 'flashcards' ? 'flashcardGameTitle' :
@@ -904,17 +945,19 @@ export default function ProntoLingoPage() {
                 activeSection === 'fillblanks' ? 'fillInTheBlanksTitle' :
                 activeSection === 'grammar' ? 'grammarExplanationTitle' :
                 'focusTimerTitle' 
-            )}</span>
+              )}
+            </span>
           </div>
-          <div className={mainContentLayout}>
+          
+          <div className={`${mainContentLayout} animate-fade-in-scale`}>
             <div className="space-y-6 md:space-y-8">
               {renderActiveSection()}
               <Footer language={currentLanguage} />
             </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }
 

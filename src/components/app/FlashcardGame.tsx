@@ -1,12 +1,12 @@
-
 "use client";
 
 import type { FC } from 'react';
 import React, { useState, useEffect, useMemo } from 'react';
-import { Zap, ChevronLeft, ChevronRight, Eye, CheckCircle } from 'lucide-react';
+import { Zap, ChevronLeft, ChevronRight, Eye, CheckCircle, RotateCcw, Trophy, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { type Sentence } from '@/types';
 import { translations, type Language } from '@/lib/translations';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -33,6 +33,7 @@ const FlashcardGame: FC<FlashcardGameProps> = ({
   const [currentWordIndex, setCurrentWordIndex] = useState<number>(0);
   const [isMeaningRevealed, setIsMeaningRevealed] = useState<boolean>(false);
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
+  const [isFlipped, setIsFlipped] = useState<boolean>(false);
 
   const t = (key: keyof typeof translations, params?: Record<string, string | number | React.ReactNode>) => {
     let text = translations[key]?.[language] ?? String(key);
@@ -60,8 +61,7 @@ const FlashcardGame: FC<FlashcardGameProps> = ({
       setWordsToPractice(Array.from(uniqueVerbsMap.values()));
       setCurrentWordIndex(0);
       setIsMeaningRevealed(false);
-      // Consider if learnedWords should be reset when the chunk changes or persist across chunks.
-      // For now, it persists until a full page refresh.
+      setIsFlipped(false);
     } else {
       setWordsToPractice([]);
     }
@@ -71,20 +71,26 @@ const FlashcardGame: FC<FlashcardGameProps> = ({
     return wordsToPractice[currentWordIndex];
   }, [wordsToPractice, currentWordIndex]);
 
+  const learnedCount = learnedWords.size;
+  const totalWords = wordsToPractice.length;
+
   const handleNextWord = () => {
     if (wordsToPractice.length === 0) return;
     setIsMeaningRevealed(false);
+    setIsFlipped(false);
     setCurrentWordIndex(prevIndex => (prevIndex + 1) % wordsToPractice.length);
   };
 
   const handlePrevWord = () => {
     if (wordsToPractice.length === 0) return;
     setIsMeaningRevealed(false);
+    setIsFlipped(false);
     setCurrentWordIndex(prevIndex => (prevIndex - 1 + wordsToPractice.length) % wordsToPractice.length);
   };
 
   const handleRevealMeaning = () => {
     setIsMeaningRevealed(true);
+    setIsFlipped(true);
   };
   
   const handleMarkAsLearned = () => {
@@ -93,18 +99,24 @@ const FlashcardGame: FC<FlashcardGameProps> = ({
     }
   };
 
+  const handleResetProgress = () => {
+    setLearnedWords(new Set());
+  };
+
   if (isLoading) {
     return (
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center text-2xl">
-            <Zap className="mr-3 h-6 w-6 text-primary" />
+      <Card className="card-modern animate-fade-in-scale">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center text-responsive-2xl text-primary">
+            <Zap className="mr-3 h-8 w-8 animate-pulse" />
             {t('flashcardGameTitle')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-48 flex flex-col items-center justify-center">
-          <LoadingSpinner />
-          <p className="mt-4 text-muted-foreground">{t('loadingFlashcards')}</p>
+        <CardContent className="h-80 flex flex-col items-center justify-center">
+          <div className="animate-pulse-glow">
+            <LoadingSpinner />
+          </div>
+          <p className="mt-6 text-muted-foreground text-lg animate-slide-in-up">{t('loadingFlashcards')}</p>
         </CardContent>
       </Card>
     );
@@ -112,17 +124,18 @@ const FlashcardGame: FC<FlashcardGameProps> = ({
 
   if (wordsToPractice.length === 0 && !isLoading) {
     return (
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center text-2xl">
-            <Zap className="mr-3 h-6 w-6 text-primary" />
+      <Card className="card-modern animate-fade-in-scale">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center text-responsive-2xl text-primary">
+            <Zap className="mr-3 h-8 w-8" />
             {t('flashcardGameTitle')}
           </CardTitle>
-           <CardDescription>{t('flashcardGameDescription')}</CardDescription>
+           <CardDescription className="text-lg mt-2">{t('flashcardGameDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertDescription className="text-center text-muted-foreground">
+          <Alert className="border-accent/50 bg-accent/5">
+            <Target className="h-5 w-5 text-accent" />
+            <AlertDescription className="text-center text-accent/80 text-lg">
               {t('noWordsForFlashcards')}
             </AlertDescription>
           </Alert>
@@ -137,81 +150,178 @@ const FlashcardGame: FC<FlashcardGameProps> = ({
   // Function to highlight verb in sentence (basic implementation)
   const highlightVerbInSentence = (sentence: string, verb: string) => {
     if (!sentence || !verb) return sentence;
-    // A more robust regex might be needed for different verb forms/conjugations
     const regex = new RegExp(`\\b(${verb}(?:e|es|s|ons|ez|ent|ai|as|a|âmes|âtes|èrent|ais|ait|ions|iez|aient|rai|ras|ra|rons|rez|ront)?)\\b`, 'gi');
-    return sentence.replace(regex, '<strong class="text-primary font-bold">$1</strong>');
+    return sentence.replace(regex, '<strong class="text-primary font-bold bg-primary/10 px-1 rounded">$1</strong>');
   };
 
   return (
-    <Card className="shadow-lg w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center text-2xl">
-          <Zap className="mr-3 h-6 w-6 text-primary" />
+    <Card className="card-modern w-full animate-fade-in-scale">
+      <CardHeader className="text-center pb-4">
+        <CardTitle className="flex items-center justify-center text-responsive-2xl text-primary">
+          <Zap className="mr-3 h-8 w-8" />
           {t('flashcardGameTitle')}
         </CardTitle>
-        <CardDescription>{t('flashcardGameDescription')}</CardDescription>
+        <CardDescription className="text-lg mt-2">{t('flashcardGameDescription')}</CardDescription>
+        
+        {/* Progress Stats */}
+        <div className="flex items-center justify-center gap-4 mt-4">
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 px-4 py-2">
+            <Trophy className="h-4 w-4 mr-2" />
+            {learnedCount}/{totalWords} {t('learnedStatus')}
+          </Badge>
+          {learnedCount > 0 && (
+            <Button
+              onClick={handleResetProgress}
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Reset
+            </Button>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6 min-h-[280px] flex flex-col justify-between">
+      
+      <CardContent className="space-y-8">
         {currentWord ? (
-          <div className={`relative p-6 rounded-lg ${isCurrentWordLearned ? 'bg-green-100 dark:bg-green-800/30' : 'bg-muted/50'} shadow-inner text-center flex-grow flex flex-col items-center justify-center`}>
-            {isCurrentWordLearned && (
-                <div className="absolute top-3 right-3 flex items-center text-green-600 dark:text-green-400 text-xs font-medium p-1 bg-green-200 dark:bg-green-700/50 rounded-md">
-                    <CheckCircle className="h-4 w-4 mr-1"/> {t('learnedStatus')}
+          <div className="flex flex-col items-center">
+            {/* Enhanced Flashcard */}
+            <div className="relative w-full max-w-lg mx-auto">
+              <div className={`flashcard flashcard-flip ${isFlipped ? 'flipped' : ''}`}>
+                <div className="relative w-full h-80 rounded-2xl shadow-2xl preserve-3d">
+                  {/* Front of Card */}
+                  <div className="absolute inset-0 backface-hidden bg-gradient-to-br from-primary via-primary to-secondary p-8 rounded-2xl flex flex-col items-center justify-center">
+                    {isCurrentWordLearned && (
+                      <div className="absolute top-4 right-4">
+                        <Badge className="bg-green-500 text-white animate-pulse">
+                          <CheckCircle className="h-4 w-4 mr-1"/>
+                          Mastered!
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    <div className="text-center">
+                      <p className="text-5xl font-bold text-primary-foreground mb-4 animate-float" data-ai-hint="flashcard word french">
+                        {currentWord.frenchVerb}
+                      </p>
+                      <div className="w-16 h-1 bg-primary-foreground/30 rounded-full mx-auto"></div>
+                      <p className="text-primary-foreground/80 mt-4 text-lg">
+                        French Verb
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Back of Card */}
+                  <div className="absolute inset-0 backface-hidden rotateY-180 bg-gradient-to-br from-card via-card to-muted/30 p-8 rounded-2xl flex flex-col items-center justify-center border border-border/50">
+                    <div className="text-center space-y-6 w-full">
+                      <div className="bg-secondary/10 border border-secondary/20 rounded-xl p-4">
+                        <p className="text-3xl font-bold text-secondary mb-2" data-ai-hint="translation word meaning">
+                          {translation || (language === 'al' ? t('noAlbanianTranslation') : t('noEnglishTranslation'))}
+                        </p>
+                        <div className="w-12 h-1 bg-secondary/30 rounded-full mx-auto"></div>
+                        <p className="text-secondary/70 mt-2 text-sm uppercase tracking-wide">
+                          {language === 'al' ? 'Albanian' : 'English'} Translation
+                        </p>
+                      </div>
+                      
+                      <div className="bg-muted/50 rounded-xl p-4">
+                        <p className="text-sm text-muted-foreground mb-2 uppercase tracking-wide">
+                          Example Usage
+                        </p>
+                        <p 
+                          className="text-base leading-relaxed" 
+                          data-ai-hint="context sentence example"
+                          dangerouslySetInnerHTML={{ __html: highlightVerbInSentence(currentWord.frenchSentence, currentWord.frenchVerb) }} 
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-            )}
-            <p className="text-4xl font-bold text-primary mb-4 break-all" data-ai-hint="flashcard word french">
-              {currentWord.frenchVerb}
-            </p>
-            {isMeaningRevealed && (
-              <div className="mt-4 space-y-3 animate-in fade-in duration-500 w-full">
-                <p className="text-2xl text-secondary" data-ai-hint="translation word meaning">
-                  {translation || (language === 'al' ? t('noAlbanianTranslation') : t('noEnglishTranslation'))}
-                </p>
-                <p 
-                    className="text-sm text-muted-foreground italic mt-2 px-2" 
-                    data-ai-hint="context sentence example"
-                    dangerouslySetInnerHTML={{ __html: highlightVerbInSentence(currentWord.frenchSentence, currentWord.frenchVerb) }} 
-                />
               </div>
-            )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="w-full max-w-lg mx-auto space-y-4 mt-8">
+              {!isMeaningRevealed && currentWord && (
+                <Button 
+                  onClick={handleRevealMeaning} 
+                  size="lg"
+                  className="w-full btn-gradient-accent hover:scale-105 transition-transform text-lg py-6"
+                >
+                  <Eye className="mr-3 h-6 w-6" />
+                  {t('revealMeaningButton')}
+                </Button>
+              )}
+              
+              {isMeaningRevealed && currentWord && !isCurrentWordLearned && (
+                <Button 
+                  onClick={handleMarkAsLearned} 
+                  size="lg"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white hover:scale-105 transition-transform text-lg py-6"
+                >
+                  <CheckCircle className="mr-3 h-6 w-6" />
+                  {t('markAsLearnedButton')}
+                </Button>
+              )}
+              
+              {isMeaningRevealed && currentWord && isCurrentWordLearned && (
+                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-center text-green-600 dark:text-green-400 text-lg font-semibold">
+                    <CheckCircle className="mr-2 h-6 w-6" />
+                    You've mastered this word!
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
-           <div className="flex-grow flex items-center justify-center">
-                <p className="text-muted-foreground">{t('noWordsForFlashcards')}</p>
-           </div>
+          <div className="flex-grow flex items-center justify-center h-80">
+            <Alert className="border-secondary/50 bg-secondary/5">
+              <Target className="h-5 w-5 text-secondary" />
+              <AlertDescription className="text-secondary/80 text-center text-lg">
+                {t('noWordsForFlashcards')}
+              </AlertDescription>
+            </Alert>
+          </div>
         )}
-        
-        <div className="mt-6 space-y-3">
-            {!isMeaningRevealed && currentWord && (
-            <Button onClick={handleRevealMeaning} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                <Eye className="mr-2 h-5 w-5" />
-                {t('revealMeaningButton')}
-            </Button>
-            )}
-             {isMeaningRevealed && currentWord && !isCurrentWordLearned && (
-                <Button onClick={handleMarkAsLearned} variant="outline" className="w-full border-green-500 text-green-600 hover:bg-green-100 dark:hover:bg-green-700/30 hover:text-green-700">
-                    <CheckCircle className="mr-2 h-5 w-5" />
-                    {t('markAsLearnedButton')}
-                </Button>
-            )}
-             {isMeaningRevealed && currentWord && isCurrentWordLearned && (
-                <Button onClick={() => {/* Can add "Mark as Unlearned" if needed */}} variant="ghost" className="w-full text-green-600 cursor-default">
-                    <CheckCircle className="mr-2 h-5 w-5" />
-                    {t('learnedStatus')}
-                </Button>
-            )}
-        </div>
-
       </CardContent>
-      <CardFooter className="flex justify-between items-center pt-6 border-t">
-        <Button onClick={handlePrevWord} variant="outline" disabled={wordsToPractice.length <= 1}>
-          <ChevronLeft className="mr-1 h-4 w-4" /> {t('prevWordButton')}
+      
+      <CardFooter className="flex justify-between items-center pt-6 border-t border-border/50">
+        <Button 
+          onClick={handlePrevWord} 
+          variant="outline" 
+          size="lg"
+          disabled={wordsToPractice.length <= 1}
+          className="hover:scale-105 transition-transform"
+        >
+          <ChevronLeft className="mr-2 h-5 w-5" /> 
+          {t('prevWordButton')}
         </Button>
-        <p className="text-sm text-muted-foreground px-2 text-center">
-          {wordsToPractice.length > 0 ? t('wordCounter', { current: currentWordIndex + 1, total: wordsToPractice.length }) : ''}
-        </p>
-        <Button onClick={handleNextWord} variant="outline" disabled={wordsToPractice.length <= 1}>
-          {t('nextWordButton')} <ChevronRight className="ml-1 h-4 w-4" />
+        
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground mb-1">
+            {wordsToPractice.length > 0 ? t('wordCounter', { current: currentWordIndex + 1, total: wordsToPractice.length }) : ''}
+          </p>
+          {totalWords > 0 && (
+            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                style={{ width: `${(learnedCount / totalWords) * 100}%` }}
+              />
+            </div>
+          )}
+        </div>
+        
+        <Button 
+          onClick={handleNextWord} 
+          variant="outline" 
+          size="lg"
+          disabled={wordsToPractice.length <= 1}
+          className="hover:scale-105 transition-transform"
+        >
+          {t('nextWordButton')} 
+          <ChevronRight className="ml-2 h-5 w-5" />
         </Button>
       </CardFooter>
     </Card>

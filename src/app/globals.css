@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -39,6 +38,17 @@ body {
     --ring: 145 75% 35%; /* Slightly darker Green for focus */
 
     --radius: 0.5rem;
+
+    /* Enhanced gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(145 75% 40%) 0%, hsl(145 75% 50%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(205 85% 50%) 0%, hsl(205 85% 60%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(35 95% 55%) 0%, hsl(35 95% 65%) 100%);
+    
+    /* Enhanced shadows */
+    --shadow-sm: 0 2px 4px 0 rgb(0 0 0 / 0.03);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.03);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.03);
 
     /* Sidebar specific colors - will mirror main theme */
     --sidebar-background: 0 0% 97%;
@@ -87,6 +97,17 @@ body {
 
     --ring: 145 65% 42%; /* Brighter Green for focus rings */
     
+    /* Enhanced gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, hsl(145 65% 48%) 0%, hsl(145 65% 58%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(205 75% 58%) 0%, hsl(205 75% 68%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(35 90% 60%) 0%, hsl(35 90% 70%) 100%);
+    
+    /* Enhanced shadows for dark mode */
+    --shadow-sm: 0 2px 4px 0 rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
     /* Sidebar specific colors - dark mode */
     --sidebar-background: 220 13% 12%;
     --sidebar-foreground: 210 30% 90%;
@@ -111,8 +132,139 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    /* Apply a subtle gradient for a more polished look, reflecting the new background */
+    /* Apply a subtle gradient for a more polished look */
     @apply bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--muted)/0.5)]; 
+  }
+}
+
+/* Enhanced component styles */
+@layer components {
+  /* Modern card styles */
+  .card-modern {
+    @apply bg-card border border-border/50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-out;
+    @apply hover:-translate-y-1 hover:border-primary/20;
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card)/0.95) 100%);
+  }
+
+  /* Enhanced button styles */
+  .btn-gradient-primary {
+    background: var(--gradient-primary);
+    @apply text-primary-foreground border-0 shadow-md hover:shadow-lg;
+    @apply transition-all duration-200 ease-out hover:scale-105 active:scale-95;
+  }
+
+  .btn-gradient-secondary {
+    background: var(--gradient-secondary);
+    @apply text-secondary-foreground border-0 shadow-md hover:shadow-lg;
+    @apply transition-all duration-200 ease-out hover:scale-105 active:scale-95;
+  }
+
+  .btn-gradient-accent {
+    background: var(--gradient-accent);
+    @apply text-accent-foreground border-0 shadow-md hover:shadow-lg;
+    @apply transition-all duration-200 ease-out hover:scale-105 active:scale-95;
+  }
+
+  /* Study area enhancements */
+  .study-sentence-card {
+    @apply bg-gradient-to-br from-primary/10 via-transparent to-secondary/10;
+    @apply border border-primary/20 rounded-2xl p-6 shadow-inner;
+    @apply backdrop-blur-sm relative overflow-hidden;
+  }
+
+  .study-sentence-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl;
+    filter: blur(40px);
+  }
+
+  /* Flashcard styles */
+  .flashcard {
+    @apply bg-gradient-to-br from-card via-card to-muted/30;
+    @apply border border-border/50 rounded-2xl shadow-xl;
+    @apply transition-all duration-500 ease-out;
+    @apply hover:shadow-2xl hover:-translate-y-2;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
+  .flashcard-flip {
+    @apply transition-transform duration-700 ease-in-out;
+    transform-style: preserve-3d;
+  }
+
+  .flashcard-flip.flipped {
+    transform: rotateY(180deg);
+  }
+
+  /* 3D flip utilities */
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .rotateY-180 {
+    transform: rotateY(180deg);
+  }
+
+  /* Game elements */
+  .game-element {
+    @apply bg-card border border-border/50 rounded-xl p-4 shadow-md;
+    @apply hover:shadow-lg hover:border-primary/30 transition-all duration-200;
+    @apply cursor-pointer select-none;
+  }
+
+  .game-element-selected {
+    @apply bg-primary/10 border-primary/50 shadow-lg;
+  }
+
+  .game-element-correct {
+    @apply bg-green-50 border-green-300 shadow-lg;
+    @apply dark:bg-green-900/20 dark:border-green-700;
+  }
+
+  .game-element-incorrect {
+    @apply bg-red-50 border-red-300 shadow-lg;
+    @apply dark:bg-red-900/20 dark:border-red-700;
+  }
+
+  /* Progress indicators */
+  .progress-ring {
+    @apply relative w-16 h-16 rounded-full;
+    background: conic-gradient(hsl(var(--primary)) var(--progress, 0%), hsl(var(--muted)) var(--progress, 0%));
+  }
+
+  /* Floating action styles */
+  .floating-action {
+    @apply fixed bottom-6 right-6 z-50;
+    @apply bg-primary text-primary-foreground rounded-full p-4 shadow-xl;
+    @apply hover:shadow-2xl hover:scale-110 transition-all duration-300;
+    @apply border-2 border-primary-foreground/20;
+  }
+
+  /* Audio player enhancements */
+  .audio-control {
+    @apply bg-card/80 backdrop-blur-md border border-border/50 rounded-xl p-1;
+    @apply hover:bg-card hover:border-primary/30 transition-all duration-200;
+  }
+
+  /* Navigation enhancements */
+  .nav-item {
+    @apply relative px-4 py-2 rounded-lg transition-all duration-200;
+    @apply hover:bg-primary/10 hover:text-primary;
+  }
+
+  .nav-item.active {
+    @apply bg-primary/20 text-primary;
+  }
+
+  .nav-item.active::before {
+    content: '';
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full;
   }
 }
 
@@ -131,5 +283,79 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary)); /* Green on hover */
+}
+
+/* Enhanced animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+  50% { box-shadow: 0 0 0 10px hsl(var(--primary) / 0); }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.5s ease-out;
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.3s ease-out;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  .text-responsive-lg {
+    @apply text-lg;
+  }
+  .text-responsive-xl {
+    @apply text-xl;
+  }
+  .text-responsive-2xl {
+    @apply text-2xl;
+  }
+}
+
+@media (min-width: 769px) {
+  .text-responsive-lg {
+    @apply text-xl;
+  }
+  .text-responsive-xl {
+    @apply text-2xl;
+  }
+  .text-responsive-2xl {
+    @apply text-3xl;
+  }
 }
 

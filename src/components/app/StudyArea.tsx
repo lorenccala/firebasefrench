@@ -1,9 +1,8 @@
-
 "use client";
 
 import type { FC } from 'react';
 import {
-  Play, Pause, SkipBack, SkipForward, RotateCcw, Eye, Info, Edit3
+  Play, Pause, SkipBack, SkipForward, RotateCcw, Eye, Info, Edit3, Volume2, Headphones
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -82,16 +81,18 @@ const StudyArea: FC<StudyAreaProps> = ({
 
   if (isLoading) {
     return (
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center text-2xl">
-            <Edit3 className="mr-3 h-6 w-6 text-primary" />
+      <Card className="card-modern animate-fade-in-scale">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center text-responsive-2xl text-primary">
+            <Edit3 className="mr-3 h-8 w-8 animate-pulse" />
             {t('studyZoneTitle')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-64 flex flex-col items-center justify-center">
-          <LoadingSpinner />
-          <p className="mt-4 text-muted-foreground">{t('loadingChunkData')}</p>
+        <CardContent className="h-80 flex flex-col items-center justify-center">
+          <div className="animate-pulse-glow">
+            <LoadingSpinner />
+          </div>
+          <p className="mt-6 text-muted-foreground text-lg animate-slide-in-up">{t('loadingChunkData')}</p>
         </CardContent>
       </Card>
     );
@@ -99,17 +100,17 @@ const StudyArea: FC<StudyAreaProps> = ({
 
   if (allSentencesCount === 0) {
      return (
-        <Card className="shadow-lg">
-            <CardHeader>
-                <CardTitle className="flex items-center text-2xl">
-                    <Info className="mr-3 h-6 w-6 text-primary" />
+        <Card className="card-modern animate-fade-in-scale">
+            <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center text-responsive-2xl text-destructive">
+                    <Info className="mr-3 h-8 w-8" />
                     {t('noSentencesLoadedTitle')}
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <Alert>
-                    <AlertTitle>{t('noSentencesLoadedTitle')}</AlertTitle>
-                    <AlertDescription>
+                <Alert className="border-destructive/50 bg-destructive/5">
+                    <AlertTitle className="text-destructive">{t('noSentencesLoadedTitle')}</AlertTitle>
+                    <AlertDescription className="text-destructive/80">
                         {t('noSentencesLoadedDescription')}
                     </AlertDescription>
                 </Alert>
@@ -120,18 +121,18 @@ const StudyArea: FC<StudyAreaProps> = ({
 
   if (!sentence && sentenceCounter.totalInChunk === 0 && !isLoading) {
     return (
-        <Card className="shadow-lg">
-            <CardHeader>
-                <CardTitle className="flex items-center text-2xl">
-                    <Info className="mr-3 h-6 w-6 text-primary" />
+        <Card className="card-modern animate-fade-in-scale">
+            <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center text-responsive-2xl text-accent">
+                    <Info className="mr-3 h-8 w-8" />
                      {t('chunkEmptyTitle')}
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                 <Alert variant="default" className="bg-secondary/30">
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>{t('noSentenceSelectedTitle')}</AlertTitle>
-                    <AlertDescription>
+                 <Alert className="border-accent/50 bg-accent/5">
+                    <Info className="h-5 w-5 text-accent" />
+                    <AlertTitle className="text-accent">{t('noSentenceSelectedTitle')}</AlertTitle>
+                    <AlertDescription className="text-accent/80">
                         {t('chunkEmptyDescription')}
                     </AlertDescription>
                 </Alert>
@@ -158,69 +159,129 @@ const StudyArea: FC<StudyAreaProps> = ({
 
 
   return (
-    <Card className="shadow-lg w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center text-2xl">
-          <Edit3 className="mr-3 h-6 w-6 text-primary" />
+    <Card className="card-modern w-full animate-fade-in-scale">
+      <CardHeader className="text-center pb-4">
+        <CardTitle className="flex items-center justify-center text-responsive-2xl text-primary">
+          <Edit3 className="mr-3 h-8 w-8" />
           {t('studyZoneTitle')}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-lg mt-2">
           {t('studyZoneDescription', { mode: studyMode })}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      
+      <CardContent className="space-y-8">
         {sentence ? (
-          <div className="p-6 rounded-lg bg-muted/50 min-h-[160px] flex flex-col justify-center shadow-inner">
-            <div className="min-h-[100px] mb-4 flex flex-col justify-center">
-              { (isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && verbDisplay && (
-                <div className="mb-3 text-center">
-                  <p className="text-sm text-muted-foreground" data-ai-hint="verb conjugation">
-                    {t('verbLabel')}:{' '}
-                    <span className="font-semibold text-primary">
-                      {verbDisplay}
-                    </span>
-                  </p>
+          <div className="space-y-6">
+            {/* Main Sentence Display */}
+            <div className="study-sentence-card animate-slide-in-up">
+              <div className="relative z-10">
+                {/* Verb Display */}
+                {(isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && verbDisplay && (
+                  <div className="mb-4 text-center animate-fade-in-scale">
+                    <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2">
+                      <span className="text-sm font-medium text-primary">{t('verbLabel')}:</span>
+                      <span className="font-bold text-primary text-lg" data-ai-hint="verb conjugation">
+                        {verbDisplay}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* French Sentence */}
+                <div className="text-center mb-6">
+                  <div className="bg-gradient-to-r from-primary via-primary to-secondary p-6 rounded-2xl shadow-xl">
+                    <p className="text-responsive-2xl font-bold text-primary-foreground leading-relaxed" data-ai-hint="foreign language text">
+                      {targetSentenceText}
+                    </p>
+                  </div>
                 </div>
-              )}
-              <p className="text-2xl font-semibold text-primary-foreground bg-primary p-3 rounded-md shadow text-center" data-ai-hint="foreign language text">
-                {targetSentenceText}
-              </p>
-              {(isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && (
-                 <p className="text-lg text-muted-foreground mt-3 text-center pt-2" data-ai-hint="translation text">
-                  {translationText}
-                </p>
-              )}
-              {studyMode === StudyMode.ActiveRecall && !isAnswerRevealed && (
-                <Button onClick={onRevealAnswer} className="mt-4 mx-auto bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                  <Eye className="mr-2 h-4 w-4" /> {t('revealAnswerButton')}
-                </Button>
-              )}
+
+                {/* Translation */}
+                {(isAnswerRevealed || studyMode !== StudyMode.ActiveRecall) && (
+                  <div className="text-center animate-slide-in-up">
+                    <p className="text-responsive-xl text-muted-foreground font-medium leading-relaxed" data-ai-hint="translation text">
+                      {translationText}
+                    </p>
+                  </div>
+                )}
+
+                {/* Reveal Answer Button */}
+                {studyMode === StudyMode.ActiveRecall && !isAnswerRevealed && (
+                  <div className="text-center mt-6 animate-fade-in-scale">
+                    <Button 
+                      onClick={onRevealAnswer} 
+                      size="lg"
+                      className="btn-gradient-secondary hover:scale-105 transition-transform"
+                    >
+                      <Eye className="mr-2 h-5 w-5" /> 
+                      {t('revealAnswerButton')}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Button onClick={audioControls.onPrev} variant="outline" size="icon" disabled={audioControls.disablePrev}>
+            {/* Enhanced Audio Controls */}
+            <div className="bg-gradient-to-r from-muted/20 to-muted/10 border border-border/50 rounded-2xl p-6 shadow-inner">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                {/* Playback Controls */}
+                <div className="flex items-center gap-3">
+                  <Button 
+                    onClick={audioControls.onPrev} 
+                    variant="outline" 
+                    size="lg"
+                    disabled={audioControls.disablePrev}
+                    className="audio-control hover:scale-105 transition-transform"
+                  >
                     <SkipBack className="h-5 w-5" />
                   </Button>
-                  <Button onClick={audioControls.onTogglePlayPause} variant="default" size="icon" className="w-12 h-12 bg-primary hover:bg-primary/90">
-                    {audioControls.isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                  
+                  <Button 
+                    onClick={audioControls.onTogglePlayPause} 
+                    size="lg"
+                    className="btn-gradient-primary w-16 h-16 rounded-full hover:scale-110 transition-transform animate-pulse-glow"
+                  >
+                    {audioControls.isPlaying ? (
+                      <Pause className="h-8 w-8" />
+                    ) : (
+                      <Play className="h-8 w-8 ml-1" />
+                    )}
                   </Button>
-                  <Button onClick={audioControls.onNext} variant="outline" size="icon" disabled={audioControls.disableNext}>
+                  
+                  <Button 
+                    onClick={audioControls.onNext} 
+                    variant="outline" 
+                    size="lg"
+                    disabled={audioControls.disableNext}
+                    className="audio-control hover:scale-105 transition-transform"
+                  >
                     <SkipForward className="h-5 w-5" />
                   </Button>
-                  <Button onClick={audioControls.onToggleLoop} variant={audioControls.isLooping ? "secondary" : "outline"} size="icon">
-                    <RotateCcw className={`h-5 w-5 ${audioControls.isLooping ? 'text-primary' : ''}`} />
+                  
+                  <Button 
+                    onClick={audioControls.onToggleLoop} 
+                    variant={audioControls.isLooping ? "default" : "outline"} 
+                    size="lg"
+                    className={`audio-control transition-all ${audioControls.isLooping ? 'btn-gradient-accent animate-pulse' : ''}`}
+                  >
+                    <RotateCcw className={`h-5 w-5 ${audioControls.isLooping ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Label htmlFor="playback-speed" className="text-sm whitespace-nowrap">{t('playbackSpeedLabel')}</Label>
+                {/* Speed Control */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="h-5 w-5 text-primary" />
+                    <Label htmlFor="playback-speed" className="text-sm font-medium whitespace-nowrap">
+                      {t('playbackSpeedLabel')}
+                    </Label>
+                  </div>
                   <Select
                     value={String(audioControls.playbackSpeed)}
                     onValueChange={(value) => audioControls.onPlaybackSpeedChange(Number(value))}
                   >
-                    <SelectTrigger id="playback-speed" className="w-[80px]">
+                    <SelectTrigger id="playback-speed" className="w-24 bg-card border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -233,30 +294,46 @@ const StudyArea: FC<StudyAreaProps> = ({
                   </Select>
                 </div>
               </div>
+            </div>
 
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
+            {/* Enhanced Progress Section */}
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-3">
+                <Headphones className="h-5 w-5 text-primary" />
+                <p className="text-lg font-semibold text-foreground">
                   {t('sentenceCounterInChunk', {current: sentenceCounter.currentNum, total: sentenceCounter.totalInChunk})}
                 </p>
-                <Progress value={progressPercentage} className="w-full h-2 mt-1" />
+              </div>
+              <div className="max-w-md mx-auto">
+                <Progress 
+                  value={progressPercentage} 
+                  className="h-3 bg-muted/50 shadow-inner"
+                  style={{
+                    '--progress': `${progressPercentage}%`
+                  } as React.CSSProperties}
+                />
+                <p className="text-sm text-muted-foreground mt-2">
+                  {Math.round(progressPercentage)}% Complete
+                </p>
               </div>
             </div>
           </div>
         ) : (
-            <Alert variant="default" className="bg-secondary/30">
-                <Info className="h-4 w-4" />
-                <AlertTitle>{t('noSentenceSelectedTitle')}</AlertTitle>
-                <AlertDescription>
-                {t('noSentenceSelectedDescription')}
-                </AlertDescription>
-            </Alert>
+          <Alert className="border-secondary/50 bg-secondary/5 animate-fade-in-scale">
+            <Info className="h-5 w-5 text-secondary" />
+            <AlertTitle className="text-secondary">{t('noSentenceSelectedTitle')}</AlertTitle>
+            <AlertDescription className="text-secondary/80">
+              {t('noSentenceSelectedDescription')}
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6 border-t">
-        <p className="text-xs text-muted-foreground">
-          {t('audioSourceInfoFile')}
-        </p>
-        {/* GrammarExplainer removed from here */}
+      
+      <CardFooter className="flex flex-col items-center gap-4 pt-6 border-t border-border/50">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Volume2 className="h-4 w-4" />
+          <span>{t('audioSourceInfoFile')}</span>
+        </div>
       </CardFooter>
     </Card>
   );
