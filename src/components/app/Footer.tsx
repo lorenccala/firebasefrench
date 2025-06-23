@@ -19,7 +19,7 @@ const Footer: FC<FooterProps> = ({ language }) => {
   return (
     <footer className="pt-8 border-t border-border text-center">
       <p className="text-sm text-muted-foreground">
-        {t('footerCopyright', { year: new Date().getFullYear() })}
+        {t('footerCopyright')}
       </p>
       <p className="text-xs text-muted-foreground mt-1">
         {t('footerCraftedWithAi')}
